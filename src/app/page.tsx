@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function Home() {
   return (
     <>
@@ -303,6 +305,55 @@ export default function Home() {
           to { opacity: 1; transform: translateY(0); }
         }
 
+        /* CTA stack below the headline */
+        .cta-stack {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 14px;
+        }
+        @media (max-width: 720px) {
+          .cta-stack { align-items: center; }
+        }
+
+        .cta-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 22px;
+          border-radius: 8px;
+          background: linear-gradient(135deg, #ff1f3d 0%, #ff4d66 100%);
+          color: #fff;
+          font-weight: 600;
+          font-size: 0.9rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          text-decoration: none;
+          box-shadow:
+            0 0 40px rgba(255, 31, 61, 0.45),
+            0 10px 30px rgba(0, 0, 0, 0.5);
+          transition: transform 220ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms ease;
+          opacity: 0;
+          transform: translateY(12px);
+          animation: rise 900ms cubic-bezier(.2,.8,.2,1) 700ms forwards;
+        }
+        .cta-button:hover {
+          transform: translateY(-2px);
+          box-shadow:
+            0 0 80px rgba(255, 31, 61, 0.65),
+            0 18px 50px rgba(0, 0, 0, 0.55);
+        }
+
+        .cta-caption {
+          margin: 0;
+          font-size: 0.75rem;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: rgba(245, 245, 245, 0.55);
+          opacity: 0;
+          animation: rise 900ms cubic-bezier(.2,.8,.2,1) 900ms forwards;
+        }
+
         /* Respect users who prefer reduced motion */
         @media (prefers-reduced-motion: reduce) {
           .grain, .stage::after, .logo, .headline,
@@ -329,7 +380,13 @@ export default function Home() {
                 alt='Llamablaze logo'
               />
             </div>
-            <h1 className='headline'>Coming Soon</h1>
+            <div className='cta-stack'>
+              <h1 className='headline'>Enter shop</h1>
+              <Link href='/shop' className='cta-button'>
+                Browse the collection →
+              </Link>
+              <p className='cta-caption'>Reserve online · pay in cash on pickup</p>
+            </div>
           </div>
         </div>
 
