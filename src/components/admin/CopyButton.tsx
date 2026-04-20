@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { CheckIcon, CopyIcon } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 export function CopyButton({ value, label = 'Copy' }: { value: string; label?: string }) {
   const [copied, setCopied] = useState(false);
@@ -9,20 +12,22 @@ export function CopyButton({ value, label = 'Copy' }: { value: string; label?: s
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
+      toast.success('Copied to clipboard');
       window.setTimeout(() => setCopied(false), 1200);
     } catch {
-      // Ignore — clipboard may be blocked.
+      toast.error('Could not copy to clipboard');
     }
   }
 
   return (
-    <button
+    <Button
       type='button'
       onClick={handle}
       aria-label={label}
-      className='rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider text-white/70 hover:bg-white/10'
+      variant='ghost'
+      size='icon-xs'
     >
-      {copied ? 'Copied!' : 'Copy'}
-    </button>
+      {copied ? <CheckIcon /> : <CopyIcon />}
+    </Button>
   );
 }

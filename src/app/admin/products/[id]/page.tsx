@@ -21,7 +21,7 @@ export default async function EditProductPage({
     <div className='flex flex-col gap-6'>
       <div>
         <h1 className='text-3xl font-semibold'>Edit product</h1>
-        <p className='mt-1 text-sm text-white/60'>/{product.slug}</p>
+        <p className='mt-1 text-sm text-muted-foreground'>/{product.slug}</p>
       </div>
       <ProductForm
         mode='edit'

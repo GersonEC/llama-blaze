@@ -2,6 +2,13 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getAdminUser } from '@/lib/auth';
 import { LoginForm } from '@/components/admin/LoginForm';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 export const metadata: Metadata = {
   title: 'Admin login · Llamablaze',
@@ -20,16 +27,16 @@ export default async function AdminLoginPage({
   }
 
   return (
-    <div className='flex min-h-dvh items-center justify-center bg-neutral-950 p-6 text-neutral-100'>
-      <div className='w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-6'>
-        <h1 className='text-2xl font-semibold'>Admin sign in</h1>
-        <p className='mt-1 text-sm text-white/60'>
-          Use the email you added to the allowlist.
-        </p>
-        <div className='mt-6'>
+    <div className='flex min-h-dvh items-center justify-center p-6'>
+      <Card className='w-full max-w-sm'>
+        <CardHeader>
+          <CardTitle className='text-2xl'>Admin sign in</CardTitle>
+          <CardDescription>Use the email you added to the allowlist.</CardDescription>
+        </CardHeader>
+        <CardContent>
           <LoginForm redirectTo={from && from.startsWith('/admin') ? from : '/admin'} />
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

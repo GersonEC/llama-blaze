@@ -7,6 +7,15 @@ import {
 } from '@/lib/repositories/reservations';
 import { formatDateTime, formatMoney } from '@/lib/format';
 import { StatusPill } from '@/components/admin/StatusPill';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,27 +32,29 @@ export default async function AdminDashboardPage() {
     <div className='flex flex-col gap-10'>
       <header>
         <h1 className='text-3xl font-semibold'>Overview</h1>
-        <p className='mt-1 text-sm text-white/60'>What's happening in the shop right now.</p>
+        <p className='mt-1 text-sm text-muted-foreground'>
+          What&apos;s happening in the shop right now.
+        </p>
       </header>
 
       <section>
-        <h2 className='mb-3 text-sm font-semibold uppercase tracking-widest text-white/50'>
+        <h2 className='mb-3 text-sm font-semibold uppercase tracking-widest text-muted-foreground'>
           Reservations by status
         </h2>
         <div className='grid grid-cols-2 gap-3 sm:grid-cols-5'>
           {(['pending', 'contacted', 'confirmed', 'completed', 'cancelled'] as const).map(
             (status) => (
-              <Link
-                key={status}
-                href={`/admin/reservations?status=${status}`}
-                className='rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-[#ff1f3d]/40'
-              >
-                <div className='text-xs uppercase tracking-widest text-white/50'>
-                  {status}
-                </div>
-                <div className='mt-1 text-3xl font-semibold tabular-nums'>
-                  {counts[status]}
-                </div>
+              <Link key={status} href={`/admin/reservations?status=${status}`}>
+                <Card size='sm' className='transition hover:ring-primary/40'>
+                  <CardHeader>
+                    <CardDescription className='text-xs uppercase tracking-widest'>
+                      {status}
+                    </CardDescription>
+                    <CardTitle className='text-3xl tabular-nums'>
+                      {counts[status]}
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
               </Link>
             ),
           )}
@@ -52,44 +63,52 @@ export default async function AdminDashboardPage() {
 
       <section>
         <div className='mb-3 flex items-center justify-between'>
-          <h2 className='text-sm font-semibold uppercase tracking-widest text-white/50'>
+          <h2 className='text-sm font-semibold uppercase tracking-widest text-muted-foreground'>
             Latest reservations
           </h2>
-          <Link
-            href='/admin/reservations'
-            className='text-sm text-white/70 underline-offset-4 hover:text-white hover:underline'
-          >
-            View all →
-          </Link>
+          <Button asChild variant='link' size='sm'>
+            <Link href='/admin/reservations'>View all →</Link>
+          </Button>
         </div>
 
         {recent.length === 0 ? (
-          <div className='rounded-xl border border-white/10 bg-white/5 p-8 text-center text-white/60'>
-            No reservations yet.
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyTitle>No reservations yet</EmptyTitle>
+              <EmptyDescription>
+                When someone reserves something, it will show up here.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
-          <ul className='flex flex-col divide-y divide-white/10 rounded-xl border border-white/10 bg-white/5'>
-            {recent.map((r) => (
-              <li key={r.id} className='flex items-center justify-between gap-4 p-4'>
-                <div className='min-w-0 flex-1'>
-                  <Link
-                    href={`/admin/reservations/${r.id}`}
-                    className='font-medium text-white hover:underline'
-                  >
-                    {r.customer.name}
-                  </Link>
-                  <p className='truncate text-sm text-white/60'>
-                    {r.items.reduce((n, i) => n + i.quantity, 0)} item(s) ·{' '}
-                    {formatDateTime(r.createdAt)}
-                  </p>
-                </div>
-                <StatusPill status={r.status} />
-                <p className='w-24 text-right font-semibold tabular-nums'>
-                  {formatMoney(r.total)}
-                </p>
-              </li>
-            ))}
-          </ul>
+          <Card>
+            <CardContent>
+              <ul className='flex flex-col divide-y divide-border -my-4'>
+                {recent.map((r) => (
+                  <li key={r.id} className='flex items-center justify-between gap-4 py-3'>
+                    <div className='min-w-0 flex-1'>
+                      <Button
+                        asChild
+                        variant='link'
+                        size='sm'
+                        className='h-auto p-0 font-medium text-foreground'
+                      >
+                        <Link href={`/admin/reservations/${r.id}`}>{r.customer.name}</Link>
+                      </Button>
+                      <p className='truncate text-sm text-muted-foreground'>
+                        {r.items.reduce((n, i) => n + i.quantity, 0)} item(s) ·{' '}
+                        {formatDateTime(r.createdAt)}
+                      </p>
+                    </div>
+                    <StatusPill status={r.status} />
+                    <p className='w-24 text-right font-semibold tabular-nums'>
+                      {formatMoney(r.total)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         )}
       </section>
     </div>

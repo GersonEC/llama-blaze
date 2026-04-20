@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { LogOutIcon } from 'lucide-react';
 import { getAdminUser } from '@/lib/auth';
 import { signOutAction } from './actions';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 export const metadata: Metadata = {
   title: 'Admin · Llamablaze',
@@ -11,55 +14,47 @@ export const metadata: Metadata = {
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getAdminUser();
 
-  // `proxy.ts` already redirects unauthenticated users to /admin/login. If
-  // `user` is null here, we're either on /admin/login itself or on a public
-  // admin page — render children without chrome.
   if (!user) {
     return <>{children}</>;
   }
 
   return (
-    <div className='min-h-dvh bg-neutral-950 text-neutral-100'>
-      <header className='border-b border-white/10 bg-neutral-950/80 backdrop-blur-md'>
+    <div className='min-h-dvh'>
+      <header className='border-b border-border bg-background/80 backdrop-blur-md'>
         <div className='mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8'>
-          <Link
-            href='/admin'
-            className='text-sm font-semibold uppercase tracking-widest text-white'
-          >
-            Llamablaze · Admin
-          </Link>
-          <nav className='flex items-center gap-1 sm:gap-2'>
-            <AdminNavLink href='/admin'>Overview</AdminNavLink>
-            <AdminNavLink href='/admin/reservations'>Reservations</AdminNavLink>
-            <AdminNavLink href='/admin/products'>Products</AdminNavLink>
-            <AdminNavLink href='/'>View shop</AdminNavLink>
+          <Button asChild variant='ghost' size='sm' className='-ml-2'>
+            <Link href='/admin' className='text-sm font-semibold uppercase tracking-widest'>
+              Llamablaze · Admin
+            </Link>
+          </Button>
+          <nav className='flex items-center gap-1'>
+            <Button asChild variant='ghost' size='sm'>
+              <Link href='/admin'>Overview</Link>
+            </Button>
+            <Button asChild variant='ghost' size='sm'>
+              <Link href='/admin/reservations'>Reservations</Link>
+            </Button>
+            <Button asChild variant='ghost' size='sm'>
+              <Link href='/admin/products'>Products</Link>
+            </Button>
+            <Button asChild variant='ghost' size='sm'>
+              <Link href='/'>View shop</Link>
+            </Button>
+            <Separator orientation='vertical' className='mx-1 h-5' />
             <form action={signOutAction}>
-              <button
-                type='submit'
-                className='rounded-md px-3 py-2 text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white'
-              >
+              <Button type='submit' variant='ghost' size='sm'>
+                <LogOutIcon data-icon='inline-start' />
                 Sign out
-              </button>
+              </Button>
             </form>
           </nav>
         </div>
-        <p className='mx-auto max-w-6xl px-4 pb-2 text-xs text-white/50 sm:px-6 lg:px-8'>
+        <p className='mx-auto max-w-6xl px-4 pb-2 text-xs text-muted-foreground sm:px-6 lg:px-8'>
           Signed in as {user.email}
         </p>
       </header>
 
       <main className='mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8'>{children}</main>
     </div>
-  );
-}
-
-function AdminNavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className='rounded-md px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/5 hover:text-white'
-    >
-      {children}
-    </Link>
   );
 }

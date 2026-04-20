@@ -1,5 +1,6 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/shallow';
@@ -72,6 +73,18 @@ export const useCartStore = create<CartState>()(
 
 export function useCartItems(): CartItem[] {
   return useCartStore((s) => s.items);
+}
+
+/**
+ * Returns `true` after the persisted store has been rehydrated on the client.
+ * Uses `useSyncExternalStore` so it avoids setState-in-effect during hydration.
+ */
+export function useCartHydrated(): boolean {
+  return useSyncExternalStore(
+    (callback) => useCartStore.persist.onFinishHydration(callback),
+    () => useCartStore.persist.hasHydrated(),
+    () => false,
+  );
 }
 
 export function useCartSummary(): CartSummary {

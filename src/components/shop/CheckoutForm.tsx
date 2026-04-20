@@ -1,12 +1,33 @@
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useCartStore, useCartSummary } from '@/lib/cart/store';
+import { Loader2Icon } from 'lucide-react';
+import { useCartHydrated, useCartStore, useCartSummary } from '@/lib/cart/store';
 import { cents } from '@/lib/domain';
 import { formatMoney, formatPriceCents } from '@/lib/format';
 import { submitReservationAction } from '@/app/(shop)/checkout/actions';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface FormState {
   name: string;
@@ -22,9 +43,7 @@ export function CheckoutForm() {
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clear);
   const summary = useCartSummary();
-
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const hydrated = useCartHydrated();
 
   const [form, setForm] = useState<FormState>(INITIAL);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -67,157 +86,134 @@ export function CheckoutForm() {
     });
   }
 
-  if (!mounted) {
-    return <div className='h-64 animate-pulse rounded-xl border border-white/10 bg-white/5' />;
+  if (!hydrated) {
+    return <Skeleton className='h-64' />;
   }
 
   if (items.length === 0) {
     return (
-      <div className='rounded-xl border border-white/10 bg-white/5 p-10 text-center'>
-        <p className='text-white/70'>Your cart is empty.</p>
-        <Link
-          href='/shop'
-          className='mt-4 inline-flex rounded-md bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/15'
-        >
-          Browse the shop
-        </Link>
-      </div>
+      <Card>
+        <CardContent className='py-10 text-center'>
+          <p className='text-muted-foreground'>Your cart is empty.</p>
+          <Button asChild variant='secondary' className='mt-4'>
+            <Link href='/shop'>Browse the shop</Link>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <form onSubmit={onSubmit} className='grid gap-10 lg:grid-cols-[1fr_320px]'>
-      <fieldset
-        disabled={isPending}
-        className='flex flex-col gap-5 rounded-xl border border-white/10 bg-white/5 p-6 disabled:opacity-70'
-      >
-        <legend className='sr-only'>Your details</legend>
+    <form onSubmit={onSubmit} className='grid gap-6 lg:grid-cols-[1fr_320px]'>
+      <Card>
+        <CardContent>
+          <fieldset disabled={isPending} className='disabled:opacity-70'>
+            <legend className='sr-only'>Your details</legend>
+            <FieldGroup>
+              <Field data-invalid={fieldErrors['customer.name'] ? true : undefined}>
+                <FieldLabel htmlFor='checkout-name'>Full name *</FieldLabel>
+                <Input
+                  id='checkout-name'
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  required
+                  autoComplete='name'
+                  aria-invalid={fieldErrors['customer.name'] ? true : undefined}
+                />
+                {fieldErrors['customer.name'] && (
+                  <FieldError>{fieldErrors['customer.name'].join(' · ')}</FieldError>
+                )}
+              </Field>
 
-        <Field
-          label='Full name'
-          name='name'
-          value={form.name}
-          onChange={(v) => setForm((f) => ({ ...f, name: v }))}
-          errors={fieldErrors['customer.name']}
-          required
-          autoComplete='name'
-        />
-        <Field
-          label='Email'
-          name='email'
-          type='email'
-          value={form.email}
-          onChange={(v) => setForm((f) => ({ ...f, email: v }))}
-          errors={fieldErrors['customer.email']}
-          required
-          autoComplete='email'
-        />
-        <Field
-          label='Phone'
-          name='phone'
-          type='tel'
-          value={form.phone}
-          onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
-          errors={fieldErrors['customer.phone']}
-          required
-          autoComplete='tel'
-        />
+              <Field data-invalid={fieldErrors['customer.email'] ? true : undefined}>
+                <FieldLabel htmlFor='checkout-email'>Email *</FieldLabel>
+                <Input
+                  id='checkout-email'
+                  type='email'
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  required
+                  autoComplete='email'
+                  aria-invalid={fieldErrors['customer.email'] ? true : undefined}
+                />
+                {fieldErrors['customer.email'] && (
+                  <FieldError>{fieldErrors['customer.email'].join(' · ')}</FieldError>
+                )}
+              </Field>
 
-        <label className='flex flex-col gap-1.5 text-sm'>
-          <span className='font-medium text-white'>Pickup notes (optional)</span>
-          <textarea
-            value={form.pickupNotes}
-            onChange={(e) => setForm((f) => ({ ...f, pickupNotes: e.target.value }))}
-            rows={3}
-            placeholder='Preferred area, times, anything else…'
-            className='rounded-md border border-white/15 bg-neutral-900 px-3 py-2 text-white placeholder:text-white/40 focus:border-[#ff1f3d] focus:outline-none'
-          />
-        </label>
+              <Field data-invalid={fieldErrors['customer.phone'] ? true : undefined}>
+                <FieldLabel htmlFor='checkout-phone'>Phone *</FieldLabel>
+                <Input
+                  id='checkout-phone'
+                  type='tel'
+                  value={form.phone}
+                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                  required
+                  autoComplete='tel'
+                  aria-invalid={fieldErrors['customer.phone'] ? true : undefined}
+                />
+                {fieldErrors['customer.phone'] && (
+                  <FieldError>{fieldErrors['customer.phone'].join(' · ')}</FieldError>
+                )}
+              </Field>
 
-        {error && (
-          <div className='rounded-md border border-[#ff1f3d]/40 bg-[#ff1f3d]/10 p-3 text-sm text-[#ff8a9c]'>
-            {error}
+              <Field>
+                <FieldLabel htmlFor='checkout-notes'>Pickup notes (optional)</FieldLabel>
+                <Textarea
+                  id='checkout-notes'
+                  value={form.pickupNotes}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, pickupNotes: e.target.value }))
+                  }
+                  rows={3}
+                  placeholder='Preferred area, times, anything else…'
+                />
+              </Field>
+
+              {error && (
+                <Alert variant='destructive'>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+            </FieldGroup>
+          </fieldset>
+        </CardContent>
+        <CardFooter className='flex flex-col items-start gap-3 border-t'>
+          <Button type='submit' size='lg' disabled={isPending}>
+            {isPending && <Loader2Icon data-icon='inline-start' className='animate-spin' />}
+            {isPending ? 'Reserving…' : 'Confirm reservation'}
+          </Button>
+          <FieldDescription>
+            By reserving, you commit to pay in cash when we meet. You can cancel any time by
+            replying to our email.
+          </FieldDescription>
+        </CardFooter>
+      </Card>
+
+      <Card size='sm' className='h-fit'>
+        <CardHeader>
+          <CardTitle>Order summary</CardTitle>
+        </CardHeader>
+        <CardContent className='flex flex-col gap-3'>
+          <ul className='flex flex-col gap-3 text-sm'>
+            {items.map((i) => (
+              <li key={i.productId} className='flex justify-between gap-3'>
+                <span className='flex-1 text-muted-foreground'>
+                  {i.quantity}× {i.name}
+                </span>
+                <span className='tabular-nums'>
+                  {formatPriceCents(cents(i.unitPriceCents * i.quantity), i.currency)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <Separator />
+          <div className='flex items-center justify-between font-semibold'>
+            <span>Total</span>
+            <span>{summary.subtotal ? formatMoney(summary.subtotal) : '—'}</span>
           </div>
-        )}
-
-        <button
-          type='submit'
-          disabled={isPending}
-          className='inline-flex items-center justify-center rounded-md bg-[#ff1f3d] px-5 py-3 text-sm font-semibold uppercase tracking-wider text-white shadow-[0_0_40px_rgba(255,31,61,0.35)] transition hover:bg-[#ff4d66] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff1f3d] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/40 disabled:shadow-none'
-        >
-          {isPending ? 'Reserving…' : 'Confirm reservation'}
-        </button>
-
-        <p className='text-xs text-white/50'>
-          By reserving, you commit to pay in cash when we meet. You can cancel any time by
-          replying to our email.
-        </p>
-      </fieldset>
-
-      <aside className='h-fit rounded-xl border border-white/10 bg-white/5 p-5'>
-        <h2 className='text-lg font-semibold'>Order summary</h2>
-        <ul className='mt-4 flex flex-col gap-3 text-sm'>
-          {items.map((i) => (
-            <li key={i.productId} className='flex justify-between gap-3'>
-              <span className='flex-1 text-white/80'>
-                {i.quantity}× {i.name}
-              </span>
-              <span className='tabular-nums'>
-                {formatPriceCents(cents(i.unitPriceCents * i.quantity), i.currency)}
-              </span>
-            </li>
-          ))}
-        </ul>
-        <div className='mt-4 flex items-center justify-between border-t border-white/10 pt-3 font-semibold'>
-          <span>Total</span>
-          <span>{summary.subtotal ? formatMoney(summary.subtotal) : '—'}</span>
-        </div>
-      </aside>
+        </CardContent>
+      </Card>
     </form>
-  );
-}
-
-function Field({
-  label,
-  name,
-  value,
-  onChange,
-  errors,
-  type = 'text',
-  required,
-  autoComplete,
-}: {
-  label: string;
-  name: string;
-  value: string;
-  onChange: (value: string) => void;
-  errors?: string[];
-  type?: 'text' | 'email' | 'tel';
-  required?: boolean;
-  autoComplete?: string;
-}) {
-  const errId = `${name}-err`;
-  return (
-    <label className='flex flex-col gap-1.5 text-sm'>
-      <span className='font-medium text-white'>
-        {label} {required && <span className='text-[#ff1f3d]'>*</span>}
-      </span>
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        required={required}
-        autoComplete={autoComplete}
-        aria-invalid={errors && errors.length > 0 ? true : undefined}
-        aria-describedby={errors && errors.length > 0 ? errId : undefined}
-        className='rounded-md border border-white/15 bg-neutral-900 px-3 py-2 text-white placeholder:text-white/40 focus:border-[#ff1f3d] focus:outline-none aria-invalid:border-[#ff1f3d]'
-      />
-      {errors && errors.length > 0 && (
-        <span id={errId} className='text-xs text-[#ff8a9c]'>
-          {errors.join(' · ')}
-        </span>
-      )}
-    </label>
   );
 }

@@ -2,8 +2,17 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2Icon } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
 import { AdminLoginSchema } from '@/lib/domain/schemas';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
 
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter();
@@ -35,41 +44,46 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className='flex flex-col gap-4'>
-      <label className='flex flex-col gap-1.5 text-sm'>
-        <span className='font-medium text-white'>Email</span>
-        <input
-          type='email'
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          autoComplete='email'
-          className='rounded-md border border-white/15 bg-neutral-900 px-3 py-2 text-white focus:border-[#ff1f3d] focus:outline-none'
-        />
-      </label>
-      <label className='flex flex-col gap-1.5 text-sm'>
-        <span className='font-medium text-white'>Password</span>
-        <input
-          type='password'
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          autoComplete='current-password'
-          className='rounded-md border border-white/15 bg-neutral-900 px-3 py-2 text-white focus:border-[#ff1f3d] focus:outline-none'
-        />
-      </label>
-      {error && (
-        <div className='rounded-md border border-[#ff1f3d]/40 bg-[#ff1f3d]/10 p-2.5 text-sm text-[#ff8a9c]'>
-          {error}
-        </div>
-      )}
-      <button
-        type='submit'
-        disabled={isPending}
-        className='inline-flex items-center justify-center rounded-md bg-[#ff1f3d] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#ff4d66] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/40'
-      >
-        {isPending ? 'Signing in…' : 'Sign in'}
-      </button>
+    <form onSubmit={onSubmit}>
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor='login-email'>Email</FieldLabel>
+          <Input
+            id='login-email'
+            type='email'
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete='email'
+          />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor='login-password'>Password</FieldLabel>
+          <Input
+            id='login-password'
+            type='password'
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete='current-password'
+          />
+        </Field>
+        {error && (
+          <Alert variant='destructive'>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        <Button type='submit' size='lg' disabled={isPending}>
+          {isPending ? (
+            <>
+              <Loader2Icon data-icon='inline-start' className='animate-spin' />
+              Signing in…
+            </>
+          ) : (
+            'Sign in'
+          )}
+        </Button>
+      </FieldGroup>
     </form>
   );
 }

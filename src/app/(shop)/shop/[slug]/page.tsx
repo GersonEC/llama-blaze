@@ -2,10 +2,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { ArrowLeftIcon } from 'lucide-react';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { findProductBySlug } from '@/lib/repositories/products';
 import { formatMoney } from '@/lib/format';
 import { AddToCartButton } from '@/components/shop/AddToCartButton';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +43,7 @@ export default async function ProductPage({
   return (
     <div className='grid gap-10 lg:grid-cols-2'>
       <div className='flex flex-col gap-4'>
-        <div className='relative aspect-[4/5] w-full overflow-hidden rounded-xl border border-white/10 bg-neutral-900'>
+        <div className='relative aspect-[4/5] w-full overflow-hidden rounded-4xl border border-border bg-muted'>
           {product.images[0] ? (
             <Image
               src={product.images[0]}
@@ -51,7 +54,7 @@ export default async function ProductPage({
               priority
             />
           ) : (
-            <div className='flex h-full w-full items-center justify-center text-white/30'>
+            <div className='flex h-full w-full items-center justify-center text-muted-foreground'>
               No image
             </div>
           )}
@@ -61,7 +64,7 @@ export default async function ProductPage({
             {product.images.slice(1, 5).map((src, i) => (
               <div
                 key={src + i}
-                className='relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-neutral-900'
+                className='relative aspect-square overflow-hidden rounded-2xl border border-border bg-muted'
               >
                 <Image src={src} alt='' fill sizes='120px' className='object-cover' />
               </div>
@@ -72,37 +75,39 @@ export default async function ProductPage({
 
       <div className='flex flex-col gap-6'>
         <div>
-          <Link
-            href='/shop'
-            className='text-sm text-white/50 underline-offset-4 hover:text-white hover:underline'
-          >
-            ← Back to shop
-          </Link>
+          <Button asChild variant='ghost' size='sm' className='-ml-2'>
+            <Link href='/shop'>
+              <ArrowLeftIcon data-icon='inline-start' />
+              Back to shop
+            </Link>
+          </Button>
           <h1 className='mt-3 text-3xl font-semibold tracking-tight sm:text-4xl'>
             {product.name}
           </h1>
-          <p className='mt-2 text-2xl font-semibold text-[#ff1f3d]'>
+          <p className='mt-2 text-2xl font-semibold text-primary'>
             {formatMoney(product.price)}
           </p>
           {outOfStock ? (
-            <p className='mt-2 text-sm font-medium text-white/60'>Out of stock</p>
+            <p className='mt-2 text-sm font-medium text-muted-foreground'>Out of stock</p>
           ) : product.stock <= 3 ? (
-            <p className='mt-2 text-sm font-medium text-[#ff8a9c]'>
+            <p className='mt-2 text-sm font-medium text-destructive'>
               {product.stock === 1 ? 'Last one available' : `Only ${product.stock} left`}
             </p>
           ) : null}
         </div>
 
-        <div className='whitespace-pre-wrap text-base leading-relaxed text-white/80'>
-          {product.description || <em className='text-white/50'>No description yet.</em>}
+        <div className='whitespace-pre-wrap text-base leading-relaxed text-muted-foreground'>
+          {product.description || <em>No description yet.</em>}
         </div>
 
         <AddToCartButton product={product} />
 
-        <div className='rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-white/70'>
-          <strong className='text-white'>How it works:</strong> reserve online, we email you
-          to arrange a time and place. Pay in cash when we meet.
-        </div>
+        <Alert>
+          <AlertTitle>How it works</AlertTitle>
+          <AlertDescription>
+            Reserve online, we email you to arrange a time and place. Pay in cash when we meet.
+          </AlertDescription>
+        </Alert>
       </div>
     </div>
   );

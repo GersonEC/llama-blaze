@@ -2,8 +2,10 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2Icon } from 'lucide-react';
 import { RESERVATION_STATUSES, type ReservationStatus } from '@/lib/domain';
 import { updateReservationStatusAction } from '@/app/admin/reservations/actions';
+import { Button } from '@/components/ui/button';
 
 export function ReservationStatusControls({
   reservationId,
@@ -39,25 +41,26 @@ export function ReservationStatusControls({
         const isActive = currentStatus === status;
         const loading = isPending && pendingStatus === status;
         return (
-          <button
+          <Button
             key={status}
             type='button'
             onClick={() => change(status)}
             disabled={isActive || isPending}
-            className={`flex items-center justify-between rounded-md border px-3 py-2 text-sm font-medium capitalize transition ${
-              isActive
-                ? 'border-[#ff1f3d] bg-[#ff1f3d]/15 text-white'
-                : 'border-white/10 bg-white/5 text-white/80 hover:border-white/30 disabled:opacity-50'
-            }`}
+            variant={isActive ? 'default' : 'outline'}
+            className='justify-between capitalize'
           >
             <span>{status}</span>
-            <span className='text-xs text-white/50'>
-              {isActive ? 'current' : loading ? 'saving…' : ''}
+            <span className='text-xs opacity-70'>
+              {isActive ? 'current' : loading ? (
+                <Loader2Icon className='animate-spin' />
+              ) : (
+                ''
+              )}
             </span>
-          </button>
+          </Button>
         );
       })}
-      {error && <p className='text-xs text-[#ff8a9c]'>{error}</p>}
+      {error && <p className='text-xs text-destructive'>{error}</p>}
     </div>
   );
 }
