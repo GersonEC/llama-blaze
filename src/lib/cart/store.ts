@@ -88,29 +88,35 @@ export function useCartHydrated(): boolean {
 }
 
 export function useCartSummary(): CartSummary {
-  return useCartStore(
+  const { itemCount, subtotalCents, currency, hasMixedCurrencies } = useCartStore(
     useShallow((s) => {
       if (s.items.length === 0) {
         return {
           itemCount: 0,
-          subtotal: null,
-          currency: null,
+          subtotalCents: 0,
+          currency: null as Currency | null,
           hasMixedCurrencies: false,
-        } satisfies CartSummary;
+        };
       }
       const currencies = new Set<Currency>(s.items.map((i) => i.currency));
       const hasMixedCurrencies = currencies.size > 1;
       const currency: Currency | null = hasMixedCurrencies
         ? null
         : (s.items[0]?.currency ?? null);
-      const subtotalCents = s.items.reduce((sum, i) => sum + i.unitPriceCents * i.quantity, 0);
+      const subtotalCents = s.items.reduce(
+        (sum, i) => sum + i.unitPriceCents * i.quantity,
+        0,
+      );
       const itemCount = s.items.reduce((sum, i) => sum + i.quantity, 0);
-      return {
-        itemCount,
-        subtotal: currency === null ? null : { amount: cents(subtotalCents), currency },
-        currency,
-        hasMixedCurrencies,
-      } satisfies CartSummary;
+      return { itemCount, subtotalCents, currency, hasMixedCurrencies };
     }),
   );
+
+  return {
+    itemCount,
+    subtotal:
+      currency === null ? null : { amount: cents(subtotalCents), currency },
+    currency,
+    hasMixedCurrencies,
+  };
 }
