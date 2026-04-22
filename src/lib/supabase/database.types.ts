@@ -35,6 +35,8 @@ export type Database = {
           stock: number;
           images: string[];
           active: boolean;
+          category: Database['public']['Enums']['product_category'] | null;
+          discount_percentage: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -48,6 +50,8 @@ export type Database = {
           stock?: number;
           images?: string[];
           active?: boolean;
+          category?: Database['public']['Enums']['product_category'] | null;
+          discount_percentage?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -61,6 +65,8 @@ export type Database = {
           stock?: number;
           images?: string[];
           active?: boolean;
+          category?: Database['public']['Enums']['product_category'] | null;
+          discount_percentage?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -174,6 +180,12 @@ export type Database = {
         | 'confirmed'
         | 'completed'
         | 'cancelled';
+      product_category:
+        | 'abbigliamento'
+        | 'scarpe'
+        | 'borse'
+        | 'accessori'
+        | 'tech';
     };
     CompositeTypes: {
       [_ in never]: never;

@@ -7,7 +7,12 @@ import { useRef, useState, useTransition } from 'react';
 import { Loader2Icon, Trash2Icon, UploadIcon, XIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { publicEnv } from '@/lib/env';
-import { SUPPORTED_CURRENCIES } from '@/lib/domain';
+import {
+  PRODUCT_CATEGORIES,
+  PRODUCT_CATEGORY_LABELS,
+  SUPPORTED_CURRENCIES,
+  type ProductCategory,
+} from '@/lib/domain';
 import {
   createProductAction,
   deleteProductAction,
@@ -54,6 +59,8 @@ export interface ProductFormInitial {
   stock: number;
   imagePaths: string[];
   active: boolean;
+  category: ProductCategory | null;
+  discountPercentage: number | null;
 }
 
 interface ProductFormProps {
@@ -71,7 +78,11 @@ const BLANK: ProductFormInitial = {
   stock: 1,
   imagePaths: [],
   active: true,
+  category: null,
+  discountPercentage: null,
 };
+
+const UNCATEGORISED = '__uncategorised__';
 
 const PRODUCT_IMAGES_BUCKET = 'product-images';
 
@@ -85,6 +96,9 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
   const [state, setState] = useState<ProductFormInitial>(initial ?? BLANK);
   const [priceMajor, setPriceMajor] = useState<string>(
     ((initial?.priceCents ?? 0) / 100).toFixed(2),
+  );
+  const [discountInput, setDiscountInput] = useState<string>(
+    initial?.discountPercentage != null ? String(initial.discountPercentage) : '',
   );
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -141,6 +155,17 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
       return;
     }
 
+    const trimmedDiscount = discountInput.trim();
+    let discountPercentage: number | null = null;
+    if (trimmedDiscount !== '') {
+      const n = Number(trimmedDiscount);
+      if (!Number.isFinite(n) || !Number.isInteger(n)) {
+        setFieldErrors({ discountPercentage: ['Enter a whole number, or leave blank'] });
+        return;
+      }
+      discountPercentage = n;
+    }
+
     const payload = {
       slug: state.slug.trim(),
       name: state.name.trim(),
@@ -150,6 +175,8 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
       stock: state.stock,
       images: state.imagePaths,
       active: state.active,
+      category: state.category,
+      discountPercentage,
     };
 
     startTransition(async () => {
@@ -282,6 +309,59 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
                   />
                   {fieldErrors.stock && (
                     <FieldError>{fieldErrors.stock.join(' · ')}</FieldError>
+                  )}
+                </Field>
+              </div>
+
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                <Field data-invalid={fieldErrors.category ? true : undefined}>
+                  <FieldLabel htmlFor='product-category'>Category</FieldLabel>
+                  <Select
+                    value={state.category ?? UNCATEGORISED}
+                    onValueChange={(v) =>
+                      setField(
+                        'category',
+                        v === UNCATEGORISED ? null : (v as ProductCategory),
+                      )
+                    }
+                  >
+                    <SelectTrigger id='product-category' className='w-full'>
+                      <SelectValue placeholder='Pick one' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value={UNCATEGORISED}>Uncategorised</SelectItem>
+                        {PRODUCT_CATEGORIES.map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {PRODUCT_CATEGORY_LABELS[c]}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {fieldErrors.category ? (
+                    <FieldError>{fieldErrors.category.join(' · ')}</FieldError>
+                  ) : (
+                    <FieldDescription>Used by the shop filter pills.</FieldDescription>
+                  )}
+                </Field>
+
+                <Field data-invalid={fieldErrors.discountPercentage ? true : undefined}>
+                  <FieldLabel htmlFor='product-discount'>Discount %</FieldLabel>
+                  <Input
+                    id='product-discount'
+                    value={discountInput}
+                    onChange={(e) => setDiscountInput(e.target.value)}
+                    inputMode='numeric'
+                    placeholder='e.g. 20'
+                    aria-invalid={fieldErrors.discountPercentage ? true : undefined}
+                  />
+                  {fieldErrors.discountPercentage ? (
+                    <FieldError>{fieldErrors.discountPercentage.join(' · ')}</FieldError>
+                  ) : (
+                    <FieldDescription>
+                      Leave blank for no discount. 1–90 to show a sale price.
+                    </FieldDescription>
                   )}
                 </Field>
               </div>

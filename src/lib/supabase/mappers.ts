@@ -33,6 +33,8 @@ export function toProduct(
     images: imageUrls,
     imagePaths: row.images,
     active: row.active,
+    category: row.category,
+    discountPercentage: row.discount_percentage,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };

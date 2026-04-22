@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { RESERVATION_STATUSES } from './reservation';
 import { SUPPORTED_CURRENCIES } from './money';
+import { PRODUCT_CATEGORIES } from './product';
 
 /** Kebab-case slug, 1–80 chars, used in `/shop/[slug]`. */
 const slugSchema = z
@@ -23,6 +24,14 @@ export const ProductFormSchema = z.object({
   stock: z.number().int().nonnegative('Stock cannot be negative'),
   images: z.array(z.string().min(1)).max(10).default([]),
   active: z.boolean().default(true),
+  category: z.enum(PRODUCT_CATEGORIES).nullable().default(null),
+  discountPercentage: z
+    .number()
+    .int('Discount must be a whole number')
+    .min(1, 'Discount must be at least 1%')
+    .max(90, 'Discount cannot exceed 90%')
+    .nullable()
+    .default(null),
 });
 export type ProductFormInput = z.infer<typeof ProductFormSchema>;
 

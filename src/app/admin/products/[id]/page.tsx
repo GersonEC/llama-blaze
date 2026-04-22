@@ -35,6 +35,8 @@ export default async function EditProductPage({
           stock: product.stock,
           imagePaths: [...product.imagePaths],
           active: product.active,
+          category: product.category,
+          discountPercentage: product.discountPercentage,
         }}
       />
     </div>

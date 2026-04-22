@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { requireAdmin } from '@/lib/auth';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { ProductFormSchema } from '@/lib/domain/schemas';
+import type { ProductCategory } from '@/lib/domain';
 import {
   createProduct,
   deleteProduct,
@@ -30,6 +31,8 @@ interface ProductFormPayload {
   stock: number;
   images: string[];
   active: boolean;
+  category: ProductCategory | null;
+  discountPercentage: number | null;
 }
 
 async function upsertInternal(

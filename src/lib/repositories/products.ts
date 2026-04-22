@@ -81,6 +81,8 @@ export async function createProduct(client: Client, draft: ProductDraft): Promis
     stock: draft.stock,
     images: [...draft.images],
     active: draft.active,
+    category: draft.category,
+    discount_percentage: draft.discountPercentage,
   };
   const { data, error } = await client
     .from('products')
@@ -106,6 +108,8 @@ export async function updateProduct(
     stock: draft.stock,
     images: [...draft.images],
     active: draft.active,
+    category: draft.category,
+    discount_percentage: draft.discountPercentage,
   };
   const { data, error } = await client
     .from('products')
