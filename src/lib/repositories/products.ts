@@ -125,6 +125,25 @@ export async function findProductById(
   return toProduct(data, resolveImageUrls(client, data.images));
 }
 
+/**
+ * Batch lookup by id — useful when enriching a saved reservation with the
+ * products' current image + category for display. Deleted ids are simply
+ * absent from the returned array; callers must handle missing entries.
+ */
+export async function findProductsByIds(
+  client: Client,
+  ids: ReadonlyArray<ProductId | string>,
+): Promise<Product[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await client
+    .from('products')
+    .select('*')
+    .in('id', ids as string[]);
+
+  if (error) throw error;
+  return (data ?? []).map((row) => toProduct(row, resolveImageUrls(client, row.images)));
+}
+
 export async function createProduct(client: Client, draft: ProductDraft): Promise<Product> {
   const payload: Inserts<'products'> = {
     slug: draft.slug,
