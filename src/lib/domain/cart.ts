@@ -1,5 +1,5 @@
 import type { Currency, Money } from './money';
-import type { ProductId, ProductSlug } from './product';
+import type { ProductCategory, ProductId, ProductSlug } from './product';
 
 /**
  * Cart state lives entirely in the browser (localStorage via Zustand).
@@ -17,6 +17,12 @@ export interface CartItem {
   readonly quantity: number;
   /** Upper bound shown in the UI (product stock at time of add). */
   readonly maxQuantity: number;
+  /**
+   * Snapshot of the product's category at add-time. Optional because older
+   * persisted carts (pre this field) won't have it — callers must treat
+   * `undefined` / `null` as "uncategorised".
+   */
+  readonly category?: ProductCategory | null;
 }
 
 export interface CartSummary {

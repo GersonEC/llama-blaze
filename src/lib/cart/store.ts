@@ -24,6 +24,7 @@ function productToCartItem(product: Product, quantity: number): CartItem {
     image: product.images[0] ?? null,
     quantity,
     maxQuantity: product.stock,
+    category: product.category,
   };
 }
 
