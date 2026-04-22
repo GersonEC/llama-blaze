@@ -1,7 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database, Inserts, Updates } from '@/lib/supabase/database.types';
 import { toProduct } from '@/lib/supabase/mappers';
-import type { Product, ProductDraft, ProductId, ProductSlug } from '@/lib/domain';
+import {
+  isProductCategory,
+  type Product,
+  type ProductCategory,
+  type ProductDraft,
+  type ProductId,
+  type ProductSlug,
+} from '@/lib/domain';
 
 const PRODUCT_IMAGES_BUCKET = 'product-images';
 
@@ -43,6 +50,53 @@ export async function findProductBySlug(
   if (error) throw error;
   if (!data) return null;
   return toProduct(data, resolveImageUrls(client, data.images));
+}
+
+/**
+ * Pick a handful of "you might also like" products for a PDP. Prefers the
+ * same category, newest first, excluding the current product. Falls back to
+ * the newest active products overall if the category yields fewer than 2.
+ */
+export async function listRelatedProducts(
+  client: Client,
+  options: {
+    excludeId: ProductId | string;
+    category: ProductCategory | string | null;
+    limit?: number;
+  },
+): Promise<Product[]> {
+  const limit = options.limit ?? 4;
+  const minPerCategory = 2;
+  const category = isProductCategory(options.category) ? options.category : null;
+
+  if (category) {
+    const { data, error } = await client
+      .from('products')
+      .select('*')
+      .eq('active', true)
+      .gt('stock', 0)
+      .eq('category', category)
+      .neq('id', options.excludeId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    if ((data?.length ?? 0) >= minPerCategory) {
+      return (data ?? []).map((row) =>
+        toProduct(row, resolveImageUrls(client, row.images)),
+      );
+    }
+  }
+
+  const { data, error } = await client
+    .from('products')
+    .select('*')
+    .eq('active', true)
+    .gt('stock', 0)
+    .neq('id', options.excludeId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map((row) => toProduct(row, resolveImageUrls(client, row.images)));
 }
 
 /** Admin: list everything including inactive + zero-stock. */
