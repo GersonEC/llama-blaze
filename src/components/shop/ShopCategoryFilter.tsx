@@ -25,11 +25,14 @@ export function ShopCategoryFilter({
   className,
 }: ShopCategoryFilterProps) {
   return (
-    <nav
-      aria-label='Filter by category'
-      className={cn('flex justify-center', className)}
-    >
-      <ul className='inline-flex flex-wrap items-center gap-1.5 rounded-full border border-border bg-background p-1.5'>
+    <nav aria-label='Filter by category' className={cn(className)}>
+      <ul
+        className={cn(
+          '-mx-5 flex items-center gap-2 overflow-x-auto px-5 pb-2',
+          '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          'sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 sm:pb-0',
+        )}
+      >
         <FilterPill
           href='/shop'
           label='Tutto'
@@ -62,24 +65,24 @@ function FilterPill({
   active: boolean;
 }) {
   return (
-    <li>
+    <li className='shrink-0'>
       <Link
         href={href}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'inline-flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5',
+          'inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2',
           'text-[13px] font-medium transition-colors',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           active
-            ? 'bg-primary text-primary-foreground'
-            : 'text-foreground hover:bg-muted',
+            ? 'border-primary bg-primary text-primary-foreground'
+            : 'border-border bg-background text-foreground hover:border-foreground/40 hover:bg-muted',
         )}
       >
         {label}
         <span
           className={cn(
-            'text-[11px] font-medium',
-            active ? 'opacity-75' : 'opacity-60',
+            'text-[11px] font-medium tabular-nums',
+            active ? 'opacity-70' : 'text-muted-foreground',
           )}
         >
           {count}

@@ -40,7 +40,7 @@ export function Breadcrumb({ productName, category }: BreadcrumbProps) {
       <Separator />
       <span
         aria-current='page'
-        className='truncate font-semibold text-foreground'
+        className='min-w-0 font-semibold wrap-break-word text-foreground'
       >
         {productName}
       </span>

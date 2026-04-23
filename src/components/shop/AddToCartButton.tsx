@@ -62,7 +62,7 @@ export function AddToCartButton({
             onClick={handleAdd}
             disabled={disabled}
             className={cn(
-              'h-auto flex-1 gap-2.5 rounded-xs px-6 py-[18px]',
+              'h-auto min-w-0 flex-1 shrink gap-2.5 rounded-xs px-4 py-[18px] text-center whitespace-normal sm:px-6',
               'text-[13px] font-bold uppercase tracking-[0.16em]',
               'hover:bg-accent hover:text-accent-foreground',
               justAdded && 'bg-accent text-accent-foreground',
