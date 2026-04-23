@@ -38,6 +38,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <Link href='/admin/products'>Prodotti</Link>
             </Button>
             <Button asChild variant='ghost' size='sm'>
+              <Link href='/admin/cashflow'>Cashflow</Link>
+            </Button>
+            <Button asChild variant='ghost' size='sm'>
               <Link href='/'>Vai al negozio</Link>
             </Button>
             <Separator orientation='vertical' className='mx-1 h-5' />

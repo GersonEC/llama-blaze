@@ -9,23 +9,29 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react';
+import SiteHeader from './SiteHeader';
+import SiteFooter from './SiteFooter';
 
 const displayFont = 'font-[family-name:var(--font-fraunces)]';
 
 export default function LandingPage() {
   return (
-    <div className='bg-background text-foreground'>
-      <LocalStyles />
-      <AnnouncementMarquee />
-      <Hero />
-      <ValueStrip variant='red' />
-      <Collection />
-      <ValueStrip variant='stats' />
-      <Reviews />
-      <Support />
-      <Newsletter />
-      <ChatFloat />
-    </div>
+    <>
+      <SiteHeader />
+      <div className='bg-background text-foreground'>
+        <LocalStyles />
+        <AnnouncementMarquee />
+        <Hero />
+        <ValueStrip variant='red' />
+        <Collection />
+        <ValueStrip variant='stats' />
+        <Reviews />
+        <Support />
+        <Newsletter />
+        <ChatFloat />
+      </div>
+      <SiteFooter />
+    </>
   );
 }
 
