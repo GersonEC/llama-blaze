@@ -13,10 +13,7 @@ import {
   type ReservationStatus,
 } from '@/lib/domain';
 import { StatusPill } from '@/components/admin/StatusPill';
-import {
-  FilterChips,
-  type FilterChip,
-} from '@/components/admin/FilterChips';
+import { FilterChips, type FilterChip } from '@/components/admin/FilterChips';
 import {
   DataTableBody,
   DataTableFooter,
@@ -27,14 +24,18 @@ import {
 } from '@/components/admin/DataTable';
 import { WhatsappInlineButton } from '@/components/admin/reservation/WhatsappInlineButton';
 import { buildReservationWhatsappUrl } from '@/components/admin/reservation/whatsapp';
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from '@/components/ui/empty';
 
 export const dynamic = 'force-dynamic';
 
 // Shared grid template so header and each row stay aligned.
 // Columns: customer | items | date | status | total | chevron
-const GRID_COLS =
-  'md:grid-cols-[minmax(0,2fr)_110px_170px_120px_110px_32px]';
+const GRID_COLS = 'md:grid-cols-[minmax(0,2fr)_110px_170px_120px_110px_32px]';
 
 export default async function ReservationsPage({
   searchParams,
@@ -68,9 +69,13 @@ export default async function ReservationsPage({
     <div className='flex flex-col gap-7'>
       <header className='flex flex-wrap items-end justify-between gap-4'>
         <div>
-          <h1 className='text-3xl font-semibold tracking-tight'>Prenotazioni</h1>
+          <h1 className='text-3xl font-semibold tracking-tight'>
+            Prenotazioni
+          </h1>
           <p className='mt-1.5 text-sm text-muted-foreground'>
-            <span className='font-semibold text-foreground tabular-nums'>{totalAll}</span>{' '}
+            <span className='font-semibold text-foreground tabular-nums'>
+              {totalAll}
+            </span>{' '}
             {totalAll === 1 ? 'prenotazione' : 'prenotazioni'}
             {' · '}
             <span className='font-semibold text-foreground tabular-nums'>
@@ -135,11 +140,15 @@ export default async function ReservationsPage({
                         className='size-[3px] shrink-0 rounded-full bg-muted-foreground/60'
                       />
                       <span className='truncate'>{r.customer.phone}</span>
-                      {whatsappUrl && <WhatsappInlineButton url={whatsappUrl} />}
+                      {whatsappUrl && (
+                        <WhatsappInlineButton url={whatsappUrl} />
+                      )}
                     </p>
                   </div>
                   <div className='hidden text-sm text-muted-foreground md:block'>
-                    <span className='font-medium text-foreground'>{itemCount}</span>{' '}
+                    <span className='font-medium text-foreground'>
+                      {itemCount}
+                    </span>{' '}
                     {itemCount === 1 ? 'articolo' : 'articoli'}
                   </div>
                   <div className='hidden text-sm text-muted-foreground tabular-nums md:block'>
@@ -150,7 +159,9 @@ export default async function ReservationsPage({
                   </div>
                   <div className='col-span-2 flex items-center justify-between text-xs text-muted-foreground md:col-span-1 md:block md:text-right'>
                     <span className='md:hidden'>
-                      <span className='font-medium text-foreground'>{itemCount}</span>{' '}
+                      <span className='font-medium text-foreground'>
+                        {itemCount}
+                      </span>{' '}
                       {itemCount === 1 ? 'articolo' : 'articoli'} ·{' '}
                       {formatDateTime(r.createdAt)}
                     </span>

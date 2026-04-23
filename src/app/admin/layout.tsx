@@ -11,7 +11,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const user = await getAdminUser();
 
   if (!user) {
@@ -22,15 +26,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className='min-h-dvh'>
       <header className='border-b border-border bg-background/80 backdrop-blur-md'>
         <div className='mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8'>
-          <Button asChild variant='ghost' size='sm' className='-ml-2'>
-            <Link href='/admin' className='text-sm font-semibold uppercase tracking-widest'>
-              Llamablaze · Admin
-            </Link>
-          </Button>
-          <nav className='flex items-center gap-1'>
-            <Button asChild variant='ghost' size='sm'>
-              <Link href='/admin'>Panoramica</Link>
+          <div className='flex flex-col items-start gap-1'>
+            <Button asChild variant='ghost' size='sm' className='-ml-2'>
+              <Link
+                href='/admin'
+                className='text-sm font-semibold uppercase tracking-widest'
+              >
+                Llamablaze · Admin
+              </Link>
             </Button>
+          </div>
+          <nav className='flex items-center gap-1'>
             <Button asChild variant='ghost' size='sm'>
               <Link href='/admin/reservations'>Prenotazioni</Link>
             </Button>
@@ -43,8 +49,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Button asChild variant='ghost' size='sm'>
               <Link href='/'>Vai al negozio</Link>
             </Button>
-            <Separator orientation='vertical' className='mx-1 h-5' />
-            <form action={signOutAction}>
+            <Separator orientation='vertical' className='mx-1 h-10' />
+            <form action={signOutAction} className='flex items-center gap-1'>
               <Button type='submit' variant='ghost' size='sm'>
                 <LogOutIcon data-icon='inline-start' />
                 Esci
@@ -52,12 +58,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </form>
           </nav>
         </div>
-        <p className='mx-auto max-w-6xl px-4 pb-2 text-xs text-muted-foreground sm:px-6 lg:px-8'>
-          Accesso effettuato come {user.email}
-        </p>
       </header>
 
-      <main className='mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8'>{children}</main>
+      <main className='mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8'>
+        {children}
+      </main>
     </div>
   );
 }

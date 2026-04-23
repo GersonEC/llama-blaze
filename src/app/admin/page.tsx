@@ -13,7 +13,10 @@ import { listAllProducts } from '@/lib/repositories/products';
 import { buildCashflowYear } from '@/lib/cashflow';
 import { formatDateTime } from '@/lib/format';
 import type { Product } from '@/lib/domain';
-import { KpiStrip, type KpiCardProps } from '@/components/admin/dashboard/KpiStrip';
+import {
+  KpiStrip,
+  type KpiCardProps,
+} from '@/components/admin/dashboard/KpiStrip';
 import { CashflowCard } from '@/components/admin/dashboard/CashflowCard';
 import { ReservationsCard } from '@/components/admin/dashboard/ReservationsCard';
 import {
@@ -35,15 +38,21 @@ export default async function AdminDashboardPage() {
   const year = now.getFullYear();
   const monthIndex = now.getMonth();
 
-  const [counts, recent, entrateEntries, usciteEntries, treasuryCents, products] =
-    await Promise.all([
-      countReservationsByStatus(supabase),
-      listReservations(supabase, { limit: 5 }),
-      listCompletedReservationEntries(supabase, year),
-      listPurchaseEntries(supabase, year),
-      getTreasuryBalanceCents(supabase),
-      listAllProducts(supabase),
-    ]);
+  const [
+    counts,
+    recent,
+    entrateEntries,
+    usciteEntries,
+    treasuryCents,
+    products,
+  ] = await Promise.all([
+    countReservationsByStatus(supabase),
+    listReservations(supabase, { limit: 5 }),
+    listCompletedReservationEntries(supabase, year),
+    listPurchaseEntries(supabase, year),
+    getTreasuryBalanceCents(supabase),
+    listAllProducts(supabase),
+  ]);
 
   const cashflow = buildCashflowYear({
     year,
@@ -64,14 +73,6 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className='flex flex-col gap-8'>
-      <header>
-        <h1 className='text-3xl font-semibold tracking-tight'>Panoramica</h1>
-        <p className='mt-1.5 text-sm text-muted-foreground'>
-          Cosa sta succedendo nel negozio · ultimo aggiornamento{' '}
-          <span className='font-medium text-foreground'>{formatDateTime(now)}</span>
-        </p>
-      </header>
-
       <KpiStrip items={kpis} />
 
       <CashflowCard
@@ -109,7 +110,13 @@ function buildKpis(params: {
   netPerMonth: readonly number[];
   monthIndex: number;
 }): KpiCardProps[] {
-  const { treasuryCents, entratePerMonth, uscitePerMonth, netPerMonth, monthIndex } = params;
+  const {
+    treasuryCents,
+    entratePerMonth,
+    uscitePerMonth,
+    netPerMonth,
+    monthIndex,
+  } = params;
   const prev = monthIndex - 1;
 
   const entrateCurrent = entratePerMonth[monthIndex] ?? 0;

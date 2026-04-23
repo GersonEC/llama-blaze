@@ -54,10 +54,13 @@ export function StatusTransitionCard({
 }: StatusTransitionCardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [pendingStatus, setPendingStatus] = useState<ReservationStatus | null>(null);
+  const [pendingStatus, setPendingStatus] = useState<ReservationStatus | null>(
+    null,
+  );
 
   const next = nextStatus(currentStatus);
-  const isTerminal = currentStatus === 'completed' || currentStatus === 'cancelled';
+  const isTerminal =
+    currentStatus === 'completed' || currentStatus === 'cancelled';
   const advanceLabel = ADVANCE_LABEL[currentStatus];
 
   function change(target: ReservationStatus) {
@@ -96,8 +99,8 @@ export function StatusTransitionCard({
         </CardTitle>
         <CardDescription className='text-xs leading-relaxed'>
           Le scorte vengono decrementate alla creazione della prenotazione e{' '}
-          <span className='font-medium text-foreground/80'>non</span> vengono ripristinate
-          automaticamente in caso di annullamento.
+          <span className='font-medium text-foreground/80'>non</span> vengono
+          ripristinate automaticamente in caso di annullamento.
         </CardDescription>
       </CardHeader>
       <CardContent className='flex flex-col gap-4'>
@@ -122,21 +125,15 @@ export function StatusTransitionCard({
             <span>{advanceLabel}</span>
             {!isTerminal && <ArrowRightIcon data-icon='inline-end' />}
           </Button>
-          <Button asChild variant='outline' className='w-full'>
-            <a href={mailto}>
-              <MailIcon data-icon='inline-start' />
-              Scrivi un&apos;email
-            </a>
-          </Button>
           {whatsappUrl && (
-            <Button asChild variant='outline' className='w-full'>
-              <a
-                href={whatsappUrl}
-                target='_blank'
-                rel='noopener noreferrer'
-              >
+            <Button
+              asChild
+              variant='outline'
+              className='w-full text-green-700 hover:text-green-600'
+            >
+              <a href={whatsappUrl} target='_blank' rel='noopener noreferrer'>
                 <MessageCircleIcon data-icon='inline-start' />
-                Scrivi su WhatsApp
+                Chat su WhatsApp
               </a>
             </Button>
           )}

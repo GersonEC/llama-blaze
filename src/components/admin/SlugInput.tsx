@@ -1,7 +1,9 @@
 import { cn } from '@/lib/utils';
 
-interface SlugInputProps
-  extends Omit<React.ComponentProps<'input'>, 'prefix' | 'className'> {
+interface SlugInputProps extends Omit<
+  React.ComponentProps<'input'>,
+  'prefix' | 'className'
+> {
   /** Static prefix rendered before the editable segment. Defaults to `/shop/`. */
   readonly prefix?: string;
   readonly className?: string;
@@ -23,7 +25,7 @@ export function SlugInput({
   return (
     <div
       className={cn(
-        'group flex h-9 w-full min-w-0 items-stretch overflow-hidden rounded-3xl border border-transparent bg-input/50 font-mono text-sm transition-[color,box-shadow,background-color] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30 has-[input[aria-invalid=true]]:border-destructive has-[input[aria-invalid=true]]:ring-3 has-[input[aria-invalid=true]]:ring-destructive/20',
+        'group flex h-9 w-full min-w-0 items-stretch overflow-hidden rounded-lg border border-transparent bg-input/50 font-mono text-sm transition-[color,box-shadow,background-color] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30 has-[input[aria-invalid=true]]:border-destructive has-[input[aria-invalid=true]]:ring-3 has-[input[aria-invalid=true]]:ring-destructive/20',
         className,
       )}
     >

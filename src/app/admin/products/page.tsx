@@ -24,7 +24,6 @@ import {
 } from '@/components/admin/DataTable';
 import { FilterChips, type FilterChip } from '@/components/admin/FilterChips';
 import { ProductStatusPill } from '@/components/admin/ProductStatusPill';
-import { SearchInput } from '@/components/admin/SearchInput';
 import {
   Empty,
   EmptyDescription,
@@ -36,8 +35,7 @@ export const dynamic = 'force-dynamic';
 
 // Shared grid template so header and each row stay aligned.
 // Columns: product | price | discounted | stock | status | chevron
-const GRID_COLS =
-  'md:grid-cols-[minmax(0,2.2fr)_110px_110px_120px_110px_32px]';
+const GRID_COLS = 'md:grid-cols-[minmax(0,2.2fr)_110px_110px_120px_110px_32px]';
 
 const LOW_STOCK_THRESHOLD = 3;
 
@@ -125,7 +123,8 @@ export default async function AdminProductsPage({
     },
   ];
 
-  const activeChipId: ProductStatus | 'low' | 'all' = status ?? (low ? 'low' : 'all');
+  const activeChipId: ProductStatus | 'low' | 'all' =
+    status ?? (low ? 'low' : 'all');
 
   const totalCount = products.length;
   const activeCount = counts.active;
@@ -153,7 +152,6 @@ export default async function AdminProductsPage({
           </p>
         </div>
         <div className='flex flex-wrap items-center gap-3'>
-          <SearchInput placeholder='Cerca per nome o slug…' />
           <Button asChild>
             <Link href='/admin/products/new'>
               <PlusIcon data-icon='inline-start' />

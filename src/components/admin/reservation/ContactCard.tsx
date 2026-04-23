@@ -44,7 +44,10 @@ export function ContactCard({ reservation }: { reservation: Reservation }) {
                 {reservation.customer.email}
               </a>
             </Button>
-            <CopyButton value={reservation.customer.email} label='Copia email' />
+            <CopyButton
+              value={reservation.customer.email}
+              label='Copia email'
+            />
           </dd>
           <dt className='text-muted-foreground'>Telefono</dt>
           <dd className='flex flex-wrap items-center gap-x-3 gap-y-1'>
@@ -64,7 +67,7 @@ export function ContactCard({ reservation }: { reservation: Reservation }) {
                 asChild
                 variant='link'
                 size='sm'
-                className='h-auto p-0 text-[#25D366] hover:text-[#128C7E]'
+                className='h-auto p-0 text-green-700 hover:text-green-600'
               >
                 <a
                   href={whatsappUrl}
@@ -92,7 +95,9 @@ export function ContactCard({ reservation }: { reservation: Reservation }) {
             <p className='text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground'>
               Note del cliente
             </p>
-            <p className='mt-1.5 text-foreground'>{reservation.customer.pickupNotes}</p>
+            <p className='mt-1.5 text-foreground'>
+              {reservation.customer.pickupNotes}
+            </p>
           </div>
         )}
       </CardContent>

@@ -30,7 +30,7 @@ export const LINEAR_TIMELINE_STEPS: readonly TimelineStep[] = [
   {
     id: 'contacted',
     label: 'Contattato',
-    sub: 'Email inviata, in attesa di risposta',
+    sub: 'Chat su WhatsApp avviata, in attesa di risposta',
   },
   { id: 'confirmed', label: 'Confermato', sub: 'Data e luogo fissati' },
   {
@@ -57,7 +57,9 @@ export const ADVANCE_LABEL: Record<ReservationStatus, string> = {
 };
 
 /** Given a current status, return the next status in the linear flow, or `null` if terminal. */
-export function nextStatus(current: ReservationStatus): ReservationStatus | null {
+export function nextStatus(
+  current: ReservationStatus,
+): ReservationStatus | null {
   switch (current) {
     case 'pending':
       return 'contacted';
