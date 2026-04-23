@@ -1,28 +1,68 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ExternalLinkIcon } from 'lucide-react';
 import { requireAdmin } from '@/lib/auth';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { findProductById } from '@/lib/repositories/products';
 import { listProductPurchases } from '@/lib/repositories/purchases';
-import { cents, purchaseTotalCents } from '@/lib/domain';
-import { formatPriceCents } from '@/lib/format';
+import type { Product } from '@/lib/domain';
+import { Button } from '@/components/ui/button';
+import { AdminBreadcrumbs } from '@/components/admin/AdminBreadcrumbs';
+import {
+  AdminPageHeader,
+  AdminPageHeaderSeparator,
+} from '@/components/admin/AdminPageHeader';
+import { DeleteProductButton } from '@/components/admin/DeleteProductButton';
 import { ProductForm } from '@/components/admin/ProductForm';
+import { ProductHistoryCard } from '@/components/admin/ProductHistoryCard';
+import { ProductStatusPill } from '@/components/admin/ProductStatusPill';
 import { RestockCard } from '@/components/admin/RestockCard';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from '@/components/ui/empty';
 
 export const dynamic = 'force-dynamic';
 
-const PURCHASE_DATE_FMT = new Intl.DateTimeFormat('en-IE', { dateStyle: 'medium' });
+const FULL_DATE_FMT = new Intl.DateTimeFormat('en-IE', { dateStyle: 'medium' });
+
+/**
+ * Human-friendly relative timestamp ("3 minuti fa"). Simple brackets: seconds,
+ * minutes, hours, days, months, years. Server-rendered against `new Date()` so
+ * it's stable for a single request.
+ */
+function formatRelative(date: Date): string {
+  const diffSec = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
+  if (diffSec < 60) return 'pochi secondi fa';
+  const diffMin = Math.round(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} ${diffMin === 1 ? 'minuto' : 'minuti'} fa`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `${diffH} ${diffH === 1 ? 'ora' : 'ore'} fa`;
+  const diffD = Math.round(diffH / 24);
+  if (diffD < 30) return `${diffD} ${diffD === 1 ? 'giorno' : 'giorni'} fa`;
+  const diffMo = Math.round(diffD / 30);
+  if (diffMo < 12) return `${diffMo} ${diffMo === 1 ? 'mese' : 'mesi'} fa`;
+  const diffY = Math.round(diffMo / 12);
+  return `${diffY} ${diffY === 1 ? 'anno' : 'anni'} fa`;
+}
+
+function ProductMetaChips({ product }: { readonly product: Product }) {
+  return (
+    <>
+      <ProductStatusPill status={product.status} />
+      <AdminPageHeaderSeparator />
+      <span>
+        Creato il{' '}
+        <span className='font-medium text-foreground/80'>
+          {FULL_DATE_FMT.format(product.createdAt)}
+        </span>
+      </span>
+      <AdminPageHeaderSeparator />
+      <span>
+        Aggiornato{' '}
+        <span className='font-medium text-foreground/80'>
+          {formatRelative(product.updatedAt)}
+        </span>
+      </span>
+    </>
+  );
+}
 
 export default async function EditProductPage({
   params,
@@ -40,10 +80,35 @@ export default async function EditProductPage({
 
   return (
     <div className='flex flex-col gap-6'>
-      <div>
-        <h1 className='text-3xl font-semibold'>Modifica prodotto</h1>
-        <p className='mt-1 text-sm text-muted-foreground'>/{product.slug}</p>
-      </div>
+      <AdminBreadcrumbs
+        items={[
+          { href: '/admin/products', label: 'Prodotti' },
+          { label: 'Modifica' },
+        ]}
+      />
+
+      <AdminPageHeader
+        title={product.name}
+        slug={`/${product.slug}`}
+        meta={<ProductMetaChips product={product} />}
+        actions={
+          <>
+            {product.status === 'active' && (
+              <Button asChild variant='outline' size='sm'>
+                <Link href={`/shop/${product.slug}`} target='_blank'>
+                  <ExternalLinkIcon data-icon='inline-start' />
+                  Apri nel negozio
+                </Link>
+              </Button>
+            )}
+            <DeleteProductButton
+              productId={product.id}
+              productName={product.name}
+            />
+          </>
+        }
+      />
+
       <ProductForm
         mode='edit'
         productId={product.id}
@@ -61,72 +126,17 @@ export default async function EditProductPage({
           acquisitionCostCents: product.acquisitionCost?.amount ?? null,
           shippingCostCents: product.shippingCost?.amount ?? null,
         }}
-      />
-
-      <div className='grid gap-6 lg:grid-cols-[1fr_360px]'>
-        <Card>
-          <CardHeader>
-            <CardTitle className='uppercase tracking-widest text-xs text-muted-foreground'>
-              Storico acquisti
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {purchases.length === 0 ? (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyTitle>Nessun acquisto registrato</EmptyTitle>
-                  <EmptyDescription>
-                    Registra un reintegro per tenere traccia di scorte e costi.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            ) : (
-              <ul className='flex flex-col divide-y divide-border -my-4'>
-                {purchases.map((p) => (
-                  <li key={p.id} className='flex items-baseline gap-4 py-3 text-sm'>
-                    <div className='w-32 shrink-0 tabular-nums text-muted-foreground'>
-                      {PURCHASE_DATE_FMT.format(p.purchasedAt)}
-                    </div>
-                    <div className='min-w-0 flex-1'>
-                      <p className='font-medium'>
-                        {p.quantity} ×{' '}
-                        {formatPriceCents(p.unitCost.amount, p.unitCost.currency)}
-                        {p.shippingCost.amount > 0 && (
-                          <>
-                            {' '}
-                            <span className='text-muted-foreground'>
-                              + spedizione{' '}
-                              {formatPriceCents(
-                                p.shippingCost.amount,
-                                p.shippingCost.currency,
-                              )}
-                            </span>
-                          </>
-                        )}
-                      </p>
-                      {p.notes && (
-                        <p className='truncate text-muted-foreground'>{p.notes}</p>
-                      )}
-                    </div>
-                    <p className='w-24 shrink-0 text-right font-semibold tabular-nums'>
-                      {formatPriceCents(cents(purchaseTotalCents(p)), currency)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        <div className='flex h-fit flex-col gap-4'>
+        sidebar={
           <RestockCard
             productId={product.id}
             currentStock={product.stock}
             defaultUnitCostCents={product.acquisitionCost?.amount ?? null}
             defaultShippingCostCents={product.shippingCost?.amount ?? null}
           />
-        </div>
-      </div>
+        }
+      />
+
+      <ProductHistoryCard purchases={purchases} currency={currency} />
     </div>
   );
 }

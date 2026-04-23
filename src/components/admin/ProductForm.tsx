@@ -1,24 +1,20 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
-import { useRef, useState, useTransition } from 'react';
-import { Loader2Icon, Trash2Icon, UploadIcon, XIcon } from 'lucide-react';
+import { useRef, useState, useTransition, type ReactNode } from 'react';
+import { Loader2Icon } from 'lucide-react';
 import { toast } from 'sonner';
 import { publicEnv } from '@/lib/env';
 import {
   PRODUCT_CATEGORIES,
   PRODUCT_CATEGORY_LABELS,
-  PRODUCT_STATUSES,
-  PRODUCT_STATUS_LABELS,
   SUPPORTED_CURRENCIES,
   type ProductCategory,
   type ProductStatus,
 } from '@/lib/domain';
 import {
   createProductAction,
-  deleteProductAction,
   removeProductImageAction,
   updateProductAction,
   uploadProductImageAction,
@@ -30,7 +26,6 @@ import {
   Field,
   FieldDescription,
   FieldError,
-  FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
 import {
@@ -45,10 +40,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { InputAffix } from './InputAffix';
+import { SlugInput } from './SlugInput';
+import {
+  ProductImageGrid,
+  type ProductImage,
+} from './ProductImageGrid';
+import { ProductVisibilityField } from './ProductVisibilityField';
 
 export interface ProductFormInitial {
   slug: string;
@@ -66,9 +67,14 @@ export interface ProductFormInitial {
 }
 
 interface ProductFormProps {
-  mode: 'create' | 'edit';
-  productId?: string;
-  initial?: ProductFormInitial;
+  readonly mode: 'create' | 'edit';
+  readonly productId?: string;
+  readonly initial?: ProductFormInitial;
+  /**
+   * Optional content rendered in the right column, below the image grid.
+   * Used by the edit page to mount `CurrentStockCard` + `RestockCard`.
+   */
+  readonly sidebar?: ReactNode;
 }
 
 const BLANK: ProductFormInitial = {
@@ -87,7 +93,6 @@ const BLANK: ProductFormInitial = {
 };
 
 const UNCATEGORISED = '__uncategorised__';
-
 const PRODUCT_IMAGES_BUCKET = 'product-images';
 
 function publicUrlFromPath(path: string): string {
@@ -95,7 +100,25 @@ function publicUrlFromPath(path: string): string {
   return `${publicEnv.supabaseUrl.replace(/\/$/, '')}/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/${path}`;
 }
 
-export function ProductForm({ mode, productId, initial }: ProductFormProps) {
+function SectionCardTitle({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div className='flex items-center justify-between gap-2 border-b border-border pb-4'>
+      <CardTitle className='text-[11px] font-bold uppercase tracking-widest text-muted-foreground'>
+        {title}
+      </CardTitle>
+      {hint && (
+        <span className='text-[11px] text-muted-foreground/80'>{hint}</span>
+      )}
+    </div>
+  );
+}
+
+export function ProductForm({
+  mode,
+  productId,
+  initial,
+  sidebar,
+}: ProductFormProps) {
   const router = useRouter();
   const [state, setState] = useState<ProductFormInitial>(initial ?? BLANK);
   const [priceMajor, setPriceMajor] = useState<string>(
@@ -118,15 +141,16 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [uploading, setUploading] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const fileInput = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
-  function setField<K extends keyof ProductFormInitial>(key: K, value: ProductFormInitial[K]) {
+  function setField<K extends keyof ProductFormInitial>(
+    key: K,
+    value: ProductFormInitial[K],
+  ) {
     setState((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function handleUpload(file: File) {
     if (!state.slug) {
       setError('Imposta uno slug prima di caricare immagini.');
       return;
@@ -146,7 +170,6 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
       }
     } finally {
       setUploading(false);
-      if (fileInput.current) fileInput.current.value = '';
     }
   }
 
@@ -174,7 +197,9 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
     if (trimmedDiscount !== '') {
       const n = Number(trimmedDiscount);
       if (!Number.isFinite(n) || !Number.isInteger(n)) {
-        setFieldErrors({ discountPercentage: ['Inserisci un numero intero o lascia vuoto'] });
+        setFieldErrors({
+          discountPercentage: ['Inserisci un numero intero o lascia vuoto'],
+        });
         return;
       }
       discountPercentage = n;
@@ -190,12 +215,16 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
 
     const acquisitionParsed = parseMajorToCents(acquisitionMajor);
     if (acquisitionParsed === 'invalid') {
-      setFieldErrors({ acquisitionCostCents: ['Inserisci un costo valido o lascia vuoto'] });
+      setFieldErrors({
+        acquisitionCostCents: ['Inserisci un costo valido o lascia vuoto'],
+      });
       return;
     }
     const shippingParsed = parseMajorToCents(shippingMajor);
     if (shippingParsed === 'invalid') {
-      setFieldErrors({ shippingCostCents: ['Inserisci un costo valido o lascia vuoto'] });
+      setFieldErrors({
+        shippingCostCents: ['Inserisci un costo valido o lascia vuoto'],
+      });
       return;
     }
 
@@ -231,343 +260,366 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
     });
   }
 
-  async function handleDelete() {
-    if (!productId) return;
-    if (!window.confirm('Eliminare questo prodotto? Operazione irreversibile.')) return;
-    startTransition(async () => {
-      const result = await deleteProductAction(productId);
-      if (!result.ok) setError(result.error ?? 'Impossibile eliminare.');
-      else toast.success('Prodotto eliminato');
-    });
-  }
+  const images: ProductImage[] = state.imagePaths.map((path) => ({
+    key: path,
+    id: path,
+    url: publicUrlFromPath(path),
+  }));
 
   return (
-    <form onSubmit={handleSubmit} className='grid gap-6 lg:grid-cols-[1fr_360px]'>
-      <Card>
-        <CardContent>
-          <fieldset disabled={isPending}>
-            <legend className='sr-only'>Dettagli prodotto</legend>
-            <FieldGroup>
-              <Field data-invalid={fieldErrors.name ? true : undefined}>
-                <FieldLabel htmlFor='product-name'>Nome *</FieldLabel>
-                <Input
-                  id='product-name'
-                  value={state.name}
-                  onChange={(e) => setField('name', e.target.value)}
-                  required
-                  aria-invalid={fieldErrors.name ? true : undefined}
-                />
-                {fieldErrors.name && (
-                  <FieldError>{fieldErrors.name.join(' · ')}</FieldError>
-                )}
-              </Field>
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      className='grid gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-start'
+    >
+      <fieldset
+        disabled={isPending}
+        className='flex flex-col gap-5 lg:gap-6'
+      >
+        <legend className='sr-only'>Dettagli prodotto</legend>
 
-              <Field data-invalid={fieldErrors.slug ? true : undefined}>
-                <FieldLabel htmlFor='product-slug'>Slug *</FieldLabel>
-                <Input
-                  id='product-slug'
-                  value={state.slug}
-                  onChange={(e) => setField('slug', e.target.value.toLowerCase())}
+        {/* Dettagli */}
+        <Card>
+          <CardHeader>
+            <SectionCardTitle
+              title='Dettagli'
+              hint='Informazioni visibili nel negozio'
+            />
+          </CardHeader>
+          <CardContent className='flex flex-col gap-5'>
+            <Field data-invalid={fieldErrors.name ? true : undefined}>
+              <FieldLabel htmlFor='product-name'>
+                Nome <RequiredMark />
+              </FieldLabel>
+              <Input
+                id='product-name'
+                value={state.name}
+                onChange={(e) => setField('name', e.target.value)}
+                required
+                aria-invalid={fieldErrors.name ? true : undefined}
+              />
+              {fieldErrors.name && (
+                <FieldError>{fieldErrors.name.join(' · ')}</FieldError>
+              )}
+            </Field>
+
+            <Field data-invalid={fieldErrors.slug ? true : undefined}>
+              <FieldLabel htmlFor='product-slug'>
+                Slug <RequiredMark />
+              </FieldLabel>
+              <SlugInput
+                id='product-slug'
+                value={state.slug}
+                onChange={(e) =>
+                  setField('slug', e.target.value.toLowerCase())
+                }
+                required
+                aria-invalid={fieldErrors.slug ? true : undefined}
+              />
+              {fieldErrors.slug ? (
+                <FieldError>{fieldErrors.slug.join(' · ')}</FieldError>
+              ) : (
+                <FieldDescription>
+                  Solo lettere minuscole, numeri e trattini. Usato in{' '}
+                  <code className='font-mono text-foreground/80'>
+                    /shop/[slug]
+                  </code>
+                  .
+                </FieldDescription>
+              )}
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor='product-description'>Descrizione</FieldLabel>
+              <Textarea
+                id='product-description'
+                rows={6}
+                value={state.description}
+                onChange={(e) => setField('description', e.target.value)}
+                placeholder='Racconta il prodotto — materiali, storia, chi lo fa…'
+              />
+            </Field>
+          </CardContent>
+        </Card>
+
+        {/* Prezzo e inventario */}
+        <Card>
+          <CardHeader>
+            <SectionCardTitle title='Prezzo e inventario' />
+          </CardHeader>
+          <CardContent className='flex flex-col gap-5'>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-[1fr_130px_1fr]'>
+              <Field data-invalid={fieldErrors.priceCents ? true : undefined}>
+                <FieldLabel htmlFor='product-price'>
+                  Prezzo <RequiredMark />
+                </FieldLabel>
+                <InputAffix
+                  id='product-price'
+                  left='€'
+                  right={state.currency}
+                  value={priceMajor}
+                  onChange={(e) => setPriceMajor(e.target.value)}
+                  inputMode='decimal'
                   required
-                  aria-invalid={fieldErrors.slug ? true : undefined}
+                  aria-invalid={fieldErrors.priceCents ? true : undefined}
                 />
-                {fieldErrors.slug ? (
-                  <FieldError>{fieldErrors.slug.join(' · ')}</FieldError>
-                ) : (
-                  <FieldDescription>
-                    Solo lettere minuscole, numeri e trattini. Usato in /shop/[slug].
-                  </FieldDescription>
+                {fieldErrors.priceCents && (
+                  <FieldError>{fieldErrors.priceCents.join(' · ')}</FieldError>
                 )}
               </Field>
 
               <Field>
-                <FieldLabel htmlFor='product-description'>Descrizione</FieldLabel>
-                <Textarea
-                  id='product-description'
-                  rows={6}
-                  value={state.description}
-                  onChange={(e) => setField('description', e.target.value)}
-                />
-              </Field>
-
-              <div className='grid grid-cols-2 gap-4 sm:grid-cols-3'>
-                <Field data-invalid={fieldErrors.priceCents ? true : undefined}>
-                  <FieldLabel htmlFor='product-price'>Prezzo *</FieldLabel>
-                  <Input
-                    id='product-price'
-                    value={priceMajor}
-                    onChange={(e) => setPriceMajor(e.target.value)}
-                    inputMode='decimal'
-                    required
-                    aria-invalid={fieldErrors.priceCents ? true : undefined}
-                  />
-                  {fieldErrors.priceCents && (
-                    <FieldError>{fieldErrors.priceCents.join(' · ')}</FieldError>
-                  )}
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor='product-currency'>Valuta</FieldLabel>
-                  <Select
-                    value={state.currency}
-                    onValueChange={(v) => setField('currency', v)}
-                  >
-                    <SelectTrigger id='product-currency' className='w-full'>
-                      <SelectValue placeholder='Seleziona' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {SUPPORTED_CURRENCIES.map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {c}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field data-invalid={fieldErrors.stock ? true : undefined}>
-                  <FieldLabel htmlFor='product-stock'>Scorte *</FieldLabel>
-                  <Input
-                    id='product-stock'
-                    value={String(state.stock)}
-                    onChange={(e) =>
-                      setField(
-                        'stock',
-                        Math.max(0, Math.floor(Number(e.target.value) || 0)),
-                      )
-                    }
-                    inputMode='numeric'
-                    required
-                    aria-invalid={fieldErrors.stock ? true : undefined}
-                  />
-                  {fieldErrors.stock ? (
-                    <FieldError>{fieldErrors.stock.join(' · ')}</FieldError>
-                  ) : mode === 'edit' ? (
-                    <FieldDescription>
-                      Gestito dai reintegri. Modifica manualmente solo per correzioni.
-                    </FieldDescription>
-                  ) : null}
-                </Field>
-              </div>
-
-              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                <Field data-invalid={fieldErrors.category ? true : undefined}>
-                  <FieldLabel htmlFor='product-category'>Categoria</FieldLabel>
-                  <Select
-                    value={state.category ?? UNCATEGORISED}
-                    onValueChange={(v) =>
-                      setField(
-                        'category',
-                        v === UNCATEGORISED ? null : (v as ProductCategory),
-                      )
-                    }
-                  >
-                    <SelectTrigger id='product-category' className='w-full'>
-                      <SelectValue placeholder='Seleziona' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value={UNCATEGORISED}>Senza categoria</SelectItem>
-                        {PRODUCT_CATEGORIES.map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {PRODUCT_CATEGORY_LABELS[c]}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  {fieldErrors.category ? (
-                    <FieldError>{fieldErrors.category.join(' · ')}</FieldError>
-                  ) : (
-                    <FieldDescription>Usata dai filtri del negozio.</FieldDescription>
-                  )}
-                </Field>
-
-                <Field data-invalid={fieldErrors.discountPercentage ? true : undefined}>
-                  <FieldLabel htmlFor='product-discount'>Sconto %</FieldLabel>
-                  <Input
-                    id='product-discount'
-                    value={discountInput}
-                    onChange={(e) => setDiscountInput(e.target.value)}
-                    inputMode='numeric'
-                    placeholder='es. 20'
-                    aria-invalid={fieldErrors.discountPercentage ? true : undefined}
-                  />
-                  {fieldErrors.discountPercentage ? (
-                    <FieldError>{fieldErrors.discountPercentage.join(' · ')}</FieldError>
-                  ) : (
-                    <FieldDescription>
-                      Lascia vuoto per nessuno sconto. 1–90 per mostrare un prezzo scontato.
-                    </FieldDescription>
-                  )}
-                </Field>
-              </div>
-
-              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                <Field data-invalid={fieldErrors.acquisitionCostCents ? true : undefined}>
-                  <FieldLabel htmlFor='product-acquisition-cost'>
-                    Costo di acquisto
-                  </FieldLabel>
-                  <Input
-                    id='product-acquisition-cost'
-                    value={acquisitionMajor}
-                    onChange={(e) => setAcquisitionMajor(e.target.value)}
-                    inputMode='decimal'
-                    placeholder='es. 12.50'
-                    aria-invalid={fieldErrors.acquisitionCostCents ? true : undefined}
-                  />
-                  {fieldErrors.acquisitionCostCents ? (
-                    <FieldError>{fieldErrors.acquisitionCostCents.join(' · ')}</FieldError>
-                  ) : (
-                    <FieldDescription>
-                      Per unità. Aggiornato automaticamente dai reintegri.
-                    </FieldDescription>
-                  )}
-                </Field>
-
-                <Field data-invalid={fieldErrors.shippingCostCents ? true : undefined}>
-                  <FieldLabel htmlFor='product-shipping-cost'>
-                    Costo di spedizione
-                  </FieldLabel>
-                  <Input
-                    id='product-shipping-cost'
-                    value={shippingMajor}
-                    onChange={(e) => setShippingMajor(e.target.value)}
-                    inputMode='decimal'
-                    placeholder='es. 2.00'
-                    aria-invalid={fieldErrors.shippingCostCents ? true : undefined}
-                  />
-                  {fieldErrors.shippingCostCents ? (
-                    <FieldError>{fieldErrors.shippingCostCents.join(' · ')}</FieldError>
-                  ) : (
-                    <FieldDescription>
-                      Per unità. Usato per calcolare il margine.
-                    </FieldDescription>
-                  )}
-                </Field>
-              </div>
-
-              <Field data-invalid={fieldErrors.status ? true : undefined}>
-                <FieldLabel htmlFor='product-status'>Stato</FieldLabel>
+                <FieldLabel htmlFor='product-currency'>Valuta</FieldLabel>
                 <Select
-                  value={state.status}
-                  onValueChange={(v) => setField('status', v as ProductStatus)}
+                  value={state.currency}
+                  onValueChange={(v) => setField('currency', v)}
                 >
-                  <SelectTrigger id='product-status' className='w-full sm:w-[220px]'>
-                    <SelectValue />
+                  <SelectTrigger id='product-currency' className='w-full'>
+                    <SelectValue placeholder='Seleziona' />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {PRODUCT_STATUSES.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {PRODUCT_STATUS_LABELS[s]}
+                      {SUPPORTED_CURRENCIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
                         </SelectItem>
                       ))}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
-                {fieldErrors.status ? (
-                  <FieldError>{fieldErrors.status.join(' · ')}</FieldError>
+              </Field>
+
+              <Field data-invalid={fieldErrors.stock ? true : undefined}>
+                <FieldLabel htmlFor='product-stock'>
+                  Scorte <RequiredMark />
+                </FieldLabel>
+                <Input
+                  id='product-stock'
+                  value={String(state.stock)}
+                  onChange={(e) =>
+                    setField(
+                      'stock',
+                      Math.max(0, Math.floor(Number(e.target.value) || 0)),
+                    )
+                  }
+                  inputMode='numeric'
+                  required
+                  aria-invalid={fieldErrors.stock ? true : undefined}
+                />
+                {fieldErrors.stock ? (
+                  <FieldError>{fieldErrors.stock.join(' · ')}</FieldError>
+                ) : mode === 'edit' ? (
+                  <FieldDescription>
+                    Gestito dai reintegri. Modifica manualmente solo per
+                    correzioni.
+                  </FieldDescription>
+                ) : null}
+              </Field>
+            </div>
+
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              <Field data-invalid={fieldErrors.category ? true : undefined}>
+                <FieldLabel htmlFor='product-category'>Categoria</FieldLabel>
+                <Select
+                  value={state.category ?? UNCATEGORISED}
+                  onValueChange={(v) =>
+                    setField(
+                      'category',
+                      v === UNCATEGORISED ? null : (v as ProductCategory),
+                    )
+                  }
+                >
+                  <SelectTrigger id='product-category' className='w-full'>
+                    <SelectValue placeholder='Seleziona' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value={UNCATEGORISED}>
+                        Senza categoria
+                      </SelectItem>
+                      {PRODUCT_CATEGORIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {PRODUCT_CATEGORY_LABELS[c]}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                {fieldErrors.category ? (
+                  <FieldError>{fieldErrors.category.join(' · ')}</FieldError>
                 ) : (
                   <FieldDescription>
-                    Solo i prodotti attivi sono visibili nel negozio. Bozza e nascosto
-                    restano riservati all&apos;admin.
+                    Usata dai filtri del negozio.
                   </FieldDescription>
                 )}
               </Field>
 
-              {error && (
-                <Alert variant='destructive'>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
+              <Field
+                data-invalid={fieldErrors.discountPercentage ? true : undefined}
+              >
+                <FieldLabel htmlFor='product-discount'>Sconto %</FieldLabel>
+                <InputAffix
+                  id='product-discount'
+                  right='%'
+                  value={discountInput}
+                  onChange={(e) => setDiscountInput(e.target.value)}
+                  inputMode='numeric'
+                  placeholder='es. 20'
+                  aria-invalid={
+                    fieldErrors.discountPercentage ? true : undefined
+                  }
+                />
+                {fieldErrors.discountPercentage ? (
+                  <FieldError>
+                    {fieldErrors.discountPercentage.join(' · ')}
+                  </FieldError>
+                ) : (
+                  <FieldDescription>
+                    Lascia vuoto per nessuno sconto.{' '}
+                    <span className='font-semibold text-foreground/80'>1–90</span>{' '}
+                    per mostrare un prezzo scontato.
+                  </FieldDescription>
+                )}
+              </Field>
+            </div>
+
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              <Field
+                data-invalid={
+                  fieldErrors.acquisitionCostCents ? true : undefined
+                }
+              >
+                <FieldLabel htmlFor='product-acquisition-cost'>
+                  Costo di acquisto
+                </FieldLabel>
+                <InputAffix
+                  id='product-acquisition-cost'
+                  left='€'
+                  value={acquisitionMajor}
+                  onChange={(e) => setAcquisitionMajor(e.target.value)}
+                  inputMode='decimal'
+                  placeholder='12.50'
+                  aria-invalid={
+                    fieldErrors.acquisitionCostCents ? true : undefined
+                  }
+                />
+                {fieldErrors.acquisitionCostCents ? (
+                  <FieldError>
+                    {fieldErrors.acquisitionCostCents.join(' · ')}
+                  </FieldError>
+                ) : (
+                  <FieldDescription>
+                    Per unità. Aggiornato automaticamente dai reintegri.
+                  </FieldDescription>
+                )}
+              </Field>
+
+              <Field
+                data-invalid={fieldErrors.shippingCostCents ? true : undefined}
+              >
+                <FieldLabel htmlFor='product-shipping-cost'>
+                  Costo di spedizione
+                </FieldLabel>
+                <InputAffix
+                  id='product-shipping-cost'
+                  left='€'
+                  value={shippingMajor}
+                  onChange={(e) => setShippingMajor(e.target.value)}
+                  inputMode='decimal'
+                  placeholder='2.00'
+                  aria-invalid={
+                    fieldErrors.shippingCostCents ? true : undefined
+                  }
+                />
+                {fieldErrors.shippingCostCents ? (
+                  <FieldError>
+                    {fieldErrors.shippingCostCents.join(' · ')}
+                  </FieldError>
+                ) : (
+                  <FieldDescription>
+                    Per unità. Usato per calcolare il margine.
+                  </FieldDescription>
+                )}
+              </Field>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Visibilità */}
+        <Card>
+          <CardHeader>
+            <SectionCardTitle title='Visibilità' />
+          </CardHeader>
+          <CardContent>
+            <Field data-invalid={fieldErrors.status ? true : undefined}>
+              <ProductVisibilityField
+                value={state.status}
+                onChange={(v) => setField('status', v)}
+                disabled={isPending}
+              />
+              {fieldErrors.status && (
+                <FieldError>{fieldErrors.status.join(' · ')}</FieldError>
               )}
-            </FieldGroup>
-          </fieldset>
-        </CardContent>
-        <CardFooter className='border-t flex flex-wrap items-center gap-3'>
+            </Field>
+          </CardContent>
+        </Card>
+
+        {error && (
+          <Alert variant='destructive'>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Action bar */}
+        <div className='flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5'>
+          <Button asChild variant='ghost' size='sm'>
+            <Link href='/admin/products'>Annulla</Link>
+          </Button>
           <Button type='submit' disabled={isPending}>
-            {isPending && <Loader2Icon data-icon='inline-start' className='animate-spin' />}
+            {isPending && (
+              <Loader2Icon
+                data-icon='inline-start'
+                className='animate-spin'
+              />
+            )}
             {isPending
               ? 'Salvataggio…'
               : mode === 'create'
                 ? 'Crea prodotto'
                 : 'Salva modifiche'}
           </Button>
-          <Button asChild variant='ghost' size='sm'>
-            <Link href='/admin/products'>Annulla</Link>
-          </Button>
-          {mode === 'edit' && (
-            <Button
-              type='button'
-              onClick={handleDelete}
-              disabled={isPending}
-              variant='destructive'
-              size='sm'
-              className='ml-auto'
-            >
-              <Trash2Icon data-icon='inline-start' />
-              Elimina
-            </Button>
-          )}
-        </CardFooter>
-      </Card>
+        </div>
+      </fieldset>
 
-      <Card size='sm' className='h-fit'>
-        <CardHeader>
-          <CardTitle className='uppercase tracking-widest text-muted-foreground text-xs'>
-            Immagini
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='flex flex-col gap-3'>
-          <div className='grid grid-cols-2 gap-3'>
-            {state.imagePaths.map((path) => (
-              <div
-                key={path}
-                className='group relative aspect-square overflow-hidden rounded-2xl bg-muted'
-              >
-                <Image
-                  src={publicUrlFromPath(path)}
-                  alt=''
-                  fill
-                  sizes='160px'
-                  className='object-cover'
-                />
-                <Button
-                  type='button'
-                  onClick={() => handleRemoveImage(path)}
-                  variant='destructive'
-                  size='icon-sm'
-                  className='absolute right-1 top-1 opacity-0 transition group-hover:opacity-100'
-                  aria-label='Rimuovi immagine'
-                >
-                  <XIcon />
-                </Button>
-              </div>
-            ))}
-            <label className='flex aspect-square cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/30 text-center text-xs text-muted-foreground transition hover:border-primary hover:text-foreground'>
-              {uploading ? (
-                <Loader2Icon className='size-5 animate-spin' />
-              ) : (
-                <UploadIcon className='size-5' />
-              )}
-              <span>{uploading ? 'Caricamento…' : 'Carica immagine'}</span>
-              <input
-                ref={fileInput}
-                type='file'
-                accept='image/*'
-                onChange={handleUpload}
-                disabled={uploading || isPending}
-                className='hidden'
-              />
-            </label>
-          </div>
-          <FieldDescription>
-            La prima immagine è usata come copertina. Max 5MB ciascuna.
-          </FieldDescription>
-        </CardContent>
-      </Card>
+      <aside className='flex flex-col gap-5 lg:gap-6 lg:sticky lg:top-6'>
+        <Card>
+          <CardHeader>
+            <SectionCardTitle title='Immagini' hint='Max 5MB ciascuna' />
+          </CardHeader>
+          <CardContent className='flex flex-col gap-3'>
+            <ProductImageGrid
+              images={images}
+              onUpload={handleUpload}
+              onRemove={handleRemoveImage}
+              uploading={uploading}
+              disabled={isPending}
+            />
+            <p className='text-xs text-muted-foreground'>
+              La <span className='font-semibold text-foreground/80'>prima</span>{' '}
+              immagine è la copertina.
+            </p>
+          </CardContent>
+        </Card>
+        {sidebar}
+      </aside>
     </form>
+  );
+}
+
+function RequiredMark() {
+  return (
+    <span aria-hidden className='font-medium text-destructive'>
+      *
+    </span>
   );
 }

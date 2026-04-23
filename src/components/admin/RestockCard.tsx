@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/field';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CurrentStockCard } from './CurrentStockCard';
 
 interface RestockCardProps {
   productId: string;
@@ -125,20 +126,20 @@ export function RestockCard({
 
   if (!open) {
     return (
-      <Card size='sm'>
-        <CardContent className='flex flex-wrap items-center justify-between gap-3'>
-          <div>
-            <p className='text-sm font-medium'>Scorte attuali: {currentStock}</p>
-            <p className='text-sm text-muted-foreground'>
-              Registra un acquisto per aggiornare scorte e costi.
-            </p>
-          </div>
-          <Button type='button' onClick={() => setOpen(true)}>
+      <CurrentStockCard
+        stock={currentStock}
+        description='Registra un acquisto per aggiornare scorte e costi.'
+        action={
+          <Button
+            type='button'
+            onClick={() => setOpen(true)}
+            className='w-full justify-center'
+          >
             <PackagePlusIcon data-icon='inline-start' />
             Registra acquisto
           </Button>
-        </CardContent>
-      </Card>
+        }
+      />
     );
   }
 
