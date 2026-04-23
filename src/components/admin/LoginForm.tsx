@@ -27,7 +27,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
 
     const parsed = AdminLoginSchema.safeParse({ email, password });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Invalid input');
+      setError(parsed.error.issues[0]?.message ?? 'Dati non validi');
       return;
     }
 
@@ -77,10 +77,10 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
           {isPending ? (
             <>
               <Loader2Icon data-icon='inline-start' className='animate-spin' />
-              Signing in…
+              Accesso in corso…
             </>
           ) : (
-            'Sign in'
+            'Accedi'
           )}
         </Button>
       </FieldGroup>

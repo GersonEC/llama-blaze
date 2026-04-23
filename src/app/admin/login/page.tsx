@@ -30,8 +30,8 @@ export default async function AdminLoginPage({
     <div className='flex min-h-dvh items-center justify-center p-6'>
       <Card className='w-full max-w-sm'>
         <CardHeader>
-          <CardTitle className='text-2xl'>Admin sign in</CardTitle>
-          <CardDescription>Use the email you added to the allowlist.</CardDescription>
+          <CardTitle className='text-2xl'>Accesso amministratore</CardTitle>
+          <CardDescription>Usa l&apos;email aggiunta alla lista autorizzata.</CardDescription>
         </CardHeader>
         <CardContent>
           <LoginForm redirectTo={from && from.startsWith('/admin') ? from : '/admin'} />

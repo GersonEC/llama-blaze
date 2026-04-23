@@ -5,17 +5,17 @@ import { CheckIcon, CopyIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 
-export function CopyButton({ value, label = 'Copy' }: { value: string; label?: string }) {
+export function CopyButton({ value, label = 'Copia' }: { value: string; label?: string }) {
   const [copied, setCopied] = useState(false);
 
   async function handle() {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
-      toast.success('Copied to clipboard');
+      toast.success('Copiato negli appunti');
       window.setTimeout(() => setCopied(false), 1200);
     } catch {
-      toast.error('Could not copy to clipboard');
+      toast.error('Impossibile copiare negli appunti');
     }
   }
 

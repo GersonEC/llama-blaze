@@ -6,6 +6,7 @@ import { formatDateTime, formatMoney } from '@/lib/format';
 import {
   isReservationStatus,
   RESERVATION_STATUSES,
+  RESERVATION_STATUS_LABELS,
   type ReservationStatus,
 } from '@/lib/domain';
 import { StatusPill } from '@/components/admin/StatusPill';
@@ -31,16 +32,16 @@ export default async function ReservationsPage({
   return (
     <div className='flex flex-col gap-6'>
       <header>
-        <h1 className='text-3xl font-semibold'>Reservations</h1>
+        <h1 className='text-3xl font-semibold'>Prenotazioni</h1>
         <p className='mt-1 text-sm text-muted-foreground'>
-          {reservations.length} {status ? `${status} · ` : ''}
-          {reservations.length === 1 ? 'reservation' : 'reservations'}
+          {reservations.length} {status ? `${RESERVATION_STATUS_LABELS[status].toLowerCase()} · ` : ''}
+          {reservations.length === 1 ? 'prenotazione' : 'prenotazioni'}
         </p>
       </header>
 
       <nav className='flex flex-wrap gap-2'>
         <Button asChild variant={!status ? 'default' : 'outline'} size='sm'>
-          <Link href='/admin/reservations'>All</Link>
+          <Link href='/admin/reservations'>Tutte</Link>
         </Button>
         {RESERVATION_STATUSES.map((s) => (
           <Button
@@ -48,9 +49,10 @@ export default async function ReservationsPage({
             asChild
             variant={status === s ? 'default' : 'outline'}
             size='sm'
-            className='capitalize'
           >
-            <Link href={`/admin/reservations?status=${s}`}>{s}</Link>
+            <Link href={`/admin/reservations?status=${s}`}>
+              {RESERVATION_STATUS_LABELS[s]}
+            </Link>
           </Button>
         ))}
       </nav>
@@ -58,7 +60,7 @@ export default async function ReservationsPage({
       {reservations.length === 0 ? (
         <Empty className='border'>
           <EmptyHeader>
-            <EmptyTitle>No reservations here</EmptyTitle>
+            <EmptyTitle>Nessuna prenotazione qui</EmptyTitle>
           </EmptyHeader>
         </Empty>
       ) : (
@@ -78,7 +80,10 @@ export default async function ReservationsPage({
                       </p>
                     </div>
                     <p className='hidden text-sm text-muted-foreground sm:block'>
-                      {r.items.reduce((n, i) => n + i.quantity, 0)} item(s)
+                      {(() => {
+                        const n = r.items.reduce((a, i) => a + i.quantity, 0);
+                        return `${n} ${n === 1 ? 'articolo' : 'articoli'}`;
+                      })()}
                     </p>
                     <p className='hidden text-sm text-muted-foreground md:block'>
                       {formatDateTime(r.createdAt)}

@@ -3,7 +3,11 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2Icon } from 'lucide-react';
-import { RESERVATION_STATUSES, type ReservationStatus } from '@/lib/domain';
+import {
+  RESERVATION_STATUSES,
+  RESERVATION_STATUS_LABELS,
+  type ReservationStatus,
+} from '@/lib/domain';
 import { updateReservationStatusAction } from '@/app/admin/reservations/actions';
 import { Button } from '@/components/ui/button';
 
@@ -26,7 +30,7 @@ export function ReservationStatusControls({
     startTransition(async () => {
       const result = await updateReservationStatusAction(reservationId, next);
       if (!result.ok) {
-        setError(result.error ?? 'Could not update status.');
+        setError(result.error ?? 'Impossibile aggiornare lo stato.');
         setPendingStatus(null);
         return;
       }
@@ -47,11 +51,11 @@ export function ReservationStatusControls({
             onClick={() => change(status)}
             disabled={isActive || isPending}
             variant={isActive ? 'default' : 'outline'}
-            className='justify-between capitalize'
+            className='justify-between'
           >
-            <span>{status}</span>
+            <span>{RESERVATION_STATUS_LABELS[status]}</span>
             <span className='text-xs opacity-70'>
-              {isActive ? 'current' : loading ? (
+              {isActive ? 'attuale' : loading ? (
                 <Loader2Icon className='animate-spin' />
               ) : (
                 ''

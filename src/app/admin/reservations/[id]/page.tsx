@@ -33,10 +33,10 @@ export default async function AdminReservationPage({
   if (!reservation) notFound();
 
   const mailtoSubject = encodeURIComponent(
-    `Your Llamablaze reservation #${reservation.id.slice(0, 8)}`,
+    `La tua prenotazione Llamablaze #${reservation.id.slice(0, 8)}`,
   );
   const mailtoBody = encodeURIComponent(
-    `Hi ${reservation.customer.name},\n\nThanks for reserving with Llamablaze! I'd like to arrange a time and place to meet.\n\nAre you around this week? Let me know what works.\n\nThanks,\nLlamablaze`,
+    `Ciao ${reservation.customer.name},\n\nGrazie per aver prenotato con Llamablaze! Vorrei concordare un'ora e un luogo per incontrarci.\n\nSei disponibile questa settimana? Fammi sapere cosa preferisci.\n\nGrazie,\nLlamablaze`,
   );
 
   return (
@@ -45,7 +45,7 @@ export default async function AdminReservationPage({
         <Button asChild variant='ghost' size='sm' className='-ml-2'>
           <Link href='/admin/reservations'>
             <ArrowLeftIcon data-icon='inline-start' />
-            All reservations
+            Tutte le prenotazioni
           </Link>
         </Button>
         <div className='mt-2 flex flex-wrap items-center gap-3'>
@@ -59,7 +59,7 @@ export default async function AdminReservationPage({
         <Card>
           <CardHeader>
             <CardTitle className='uppercase tracking-widest text-xs text-muted-foreground'>
-              Contact
+              Contatto
             </CardTitle>
           </CardHeader>
           <CardContent className='flex flex-col gap-5'>
@@ -73,25 +73,25 @@ export default async function AdminReservationPage({
                     {reservation.customer.email}
                   </a>
                 </Button>
-                <CopyButton value={reservation.customer.email} label='Copy email' />
+                <CopyButton value={reservation.customer.email} label='Copia email' />
               </dd>
-              <dt className='text-muted-foreground'>Phone</dt>
+              <dt className='text-muted-foreground'>Telefono</dt>
               <dd className='flex items-center gap-1'>
                 <Button asChild variant='link' size='sm' className='h-auto p-0'>
                   <a href={`tel:${reservation.customer.phone}`}>
                     {reservation.customer.phone}
                   </a>
                 </Button>
-                <CopyButton value={reservation.customer.phone} label='Copy phone' />
+                <CopyButton value={reservation.customer.phone} label='Copia telefono' />
               </dd>
-              <dt className='text-muted-foreground'>Created</dt>
+              <dt className='text-muted-foreground'>Creata</dt>
               <dd>{formatDateTime(reservation.createdAt)}</dd>
-              <dt className='text-muted-foreground'>Updated</dt>
+              <dt className='text-muted-foreground'>Aggiornata</dt>
               <dd>{formatDateTime(reservation.updatedAt)}</dd>
             </dl>
             {reservation.customer.pickupNotes && (
               <div className='rounded-2xl border border-border bg-muted/30 p-3 text-sm'>
-                <p className='text-muted-foreground'>Notes</p>
+                <p className='text-muted-foreground'>Note</p>
                 <p className='mt-1'>{reservation.customer.pickupNotes}</p>
               </div>
             )}
@@ -100,7 +100,7 @@ export default async function AdminReservationPage({
 
             <div>
               <h2 className='mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground'>
-                Items
+                Articoli
               </h2>
               <ul className='flex flex-col divide-y divide-border rounded-2xl border border-border px-3'>
                 {reservation.items.map((item) => (
@@ -132,7 +132,7 @@ export default async function AdminReservationPage({
                 ))}
               </ul>
               <div className='mt-3 flex items-center justify-between rounded-2xl bg-muted/30 px-4 py-3 font-semibold'>
-                <span>Total (cash on pickup)</span>
+                <span>Totale (contanti al ritiro)</span>
                 <span>{formatMoney(reservation.total)}</span>
               </div>
             </div>
@@ -142,11 +142,11 @@ export default async function AdminReservationPage({
         <Card size='sm' className='h-fit'>
           <CardHeader>
             <CardTitle className='uppercase tracking-widest text-xs text-muted-foreground'>
-              Status
+              Stato
             </CardTitle>
             <CardDescription>
-              Stock is decremented when the reservation is created and is NOT automatically
-              restored when cancelling.
+              Le scorte vengono decrementate alla creazione della prenotazione e NON vengono
+              ripristinate automaticamente in caso di annullamento.
             </CardDescription>
           </CardHeader>
           <CardContent>

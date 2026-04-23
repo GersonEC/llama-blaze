@@ -114,7 +114,7 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!state.slug) {
-      setError('Set a slug before uploading images.');
+      setError('Imposta uno slug prima di caricare immagini.');
       return;
     }
     setUploading(true);
@@ -126,7 +126,7 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
       const result = await uploadProductImageAction(fd);
       if (result.ok) {
         setField('imagePaths', [...state.imagePaths, result.path]);
-        toast.success('Image uploaded');
+        toast.success('Immagine caricata');
       } else {
         setError(result.error);
       }
@@ -151,7 +151,7 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
 
     const priceCents = Math.round(Number(priceMajor) * 100);
     if (!Number.isFinite(priceCents) || priceCents < 0) {
-      setFieldErrors({ priceCents: ['Enter a valid price'] });
+      setFieldErrors({ priceCents: ['Inserisci un prezzo valido'] });
       return;
     }
 
@@ -160,7 +160,7 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
     if (trimmedDiscount !== '') {
       const n = Number(trimmedDiscount);
       if (!Number.isFinite(n) || !Number.isInteger(n)) {
-        setFieldErrors({ discountPercentage: ['Enter a whole number, or leave blank'] });
+        setFieldErrors({ discountPercentage: ['Inserisci un numero intero o lascia vuoto'] });
         return;
       }
       discountPercentage = n;
@@ -186,11 +186,11 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
           : await updateProductAction(productId!, payload);
 
       if (!result.ok) {
-        setError(result.error ?? 'Could not save.');
+        setError(result.error ?? 'Impossibile salvare.');
         setFieldErrors(result.fieldErrors ?? {});
         return;
       }
-      toast.success(mode === 'create' ? 'Product created' : 'Changes saved');
+      toast.success(mode === 'create' ? 'Prodotto creato' : 'Modifiche salvate');
       router.push('/admin/products');
       router.refresh();
     });
@@ -198,11 +198,11 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
 
   async function handleDelete() {
     if (!productId) return;
-    if (!window.confirm('Delete this product? This cannot be undone.')) return;
+    if (!window.confirm('Eliminare questo prodotto? Operazione irreversibile.')) return;
     startTransition(async () => {
       const result = await deleteProductAction(productId);
-      if (!result.ok) setError(result.error ?? 'Could not delete.');
-      else toast.success('Product deleted');
+      if (!result.ok) setError(result.error ?? 'Impossibile eliminare.');
+      else toast.success('Prodotto eliminato');
     });
   }
 
@@ -211,10 +211,10 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
       <Card>
         <CardContent>
           <fieldset disabled={isPending}>
-            <legend className='sr-only'>Product details</legend>
+            <legend className='sr-only'>Dettagli prodotto</legend>
             <FieldGroup>
               <Field data-invalid={fieldErrors.name ? true : undefined}>
-                <FieldLabel htmlFor='product-name'>Name *</FieldLabel>
+                <FieldLabel htmlFor='product-name'>Nome *</FieldLabel>
                 <Input
                   id='product-name'
                   value={state.name}
@@ -240,13 +240,13 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
                   <FieldError>{fieldErrors.slug.join(' · ')}</FieldError>
                 ) : (
                   <FieldDescription>
-                    Lowercase letters, numbers, hyphens only. Used in /shop/[slug].
+                    Solo lettere minuscole, numeri e trattini. Usato in /shop/[slug].
                   </FieldDescription>
                 )}
               </Field>
 
               <Field>
-                <FieldLabel htmlFor='product-description'>Description</FieldLabel>
+                <FieldLabel htmlFor='product-description'>Descrizione</FieldLabel>
                 <Textarea
                   id='product-description'
                   rows={6}
@@ -257,7 +257,7 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
 
               <div className='grid grid-cols-2 gap-4 sm:grid-cols-3'>
                 <Field data-invalid={fieldErrors.priceCents ? true : undefined}>
-                  <FieldLabel htmlFor='product-price'>Price *</FieldLabel>
+                  <FieldLabel htmlFor='product-price'>Prezzo *</FieldLabel>
                   <Input
                     id='product-price'
                     value={priceMajor}
@@ -272,13 +272,13 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor='product-currency'>Currency</FieldLabel>
+                  <FieldLabel htmlFor='product-currency'>Valuta</FieldLabel>
                   <Select
                     value={state.currency}
                     onValueChange={(v) => setField('currency', v)}
                   >
                     <SelectTrigger id='product-currency' className='w-full'>
-                      <SelectValue placeholder='Pick one' />
+                      <SelectValue placeholder='Seleziona' />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -293,7 +293,7 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
                 </Field>
 
                 <Field data-invalid={fieldErrors.stock ? true : undefined}>
-                  <FieldLabel htmlFor='product-stock'>Stock *</FieldLabel>
+                  <FieldLabel htmlFor='product-stock'>Scorte *</FieldLabel>
                   <Input
                     id='product-stock'
                     value={String(state.stock)}
@@ -315,7 +315,7 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
 
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 <Field data-invalid={fieldErrors.category ? true : undefined}>
-                  <FieldLabel htmlFor='product-category'>Category</FieldLabel>
+                  <FieldLabel htmlFor='product-category'>Categoria</FieldLabel>
                   <Select
                     value={state.category ?? UNCATEGORISED}
                     onValueChange={(v) =>
@@ -326,11 +326,11 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
                     }
                   >
                     <SelectTrigger id='product-category' className='w-full'>
-                      <SelectValue placeholder='Pick one' />
+                      <SelectValue placeholder='Seleziona' />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value={UNCATEGORISED}>Uncategorised</SelectItem>
+                        <SelectItem value={UNCATEGORISED}>Senza categoria</SelectItem>
                         {PRODUCT_CATEGORIES.map((c) => (
                           <SelectItem key={c} value={c}>
                             {PRODUCT_CATEGORY_LABELS[c]}
@@ -342,25 +342,25 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
                   {fieldErrors.category ? (
                     <FieldError>{fieldErrors.category.join(' · ')}</FieldError>
                   ) : (
-                    <FieldDescription>Used by the shop filter pills.</FieldDescription>
+                    <FieldDescription>Usata dai filtri del negozio.</FieldDescription>
                   )}
                 </Field>
 
                 <Field data-invalid={fieldErrors.discountPercentage ? true : undefined}>
-                  <FieldLabel htmlFor='product-discount'>Discount %</FieldLabel>
+                  <FieldLabel htmlFor='product-discount'>Sconto %</FieldLabel>
                   <Input
                     id='product-discount'
                     value={discountInput}
                     onChange={(e) => setDiscountInput(e.target.value)}
                     inputMode='numeric'
-                    placeholder='e.g. 20'
+                    placeholder='es. 20'
                     aria-invalid={fieldErrors.discountPercentage ? true : undefined}
                   />
                   {fieldErrors.discountPercentage ? (
                     <FieldError>{fieldErrors.discountPercentage.join(' · ')}</FieldError>
                   ) : (
                     <FieldDescription>
-                      Leave blank for no discount. 1–90 to show a sale price.
+                      Lascia vuoto per nessuno sconto. 1–90 per mostrare un prezzo scontato.
                     </FieldDescription>
                   )}
                 </Field>
@@ -374,9 +374,9 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
                 />
                 <FieldContent>
                   <FieldTitle>
-                    <FieldLabel htmlFor='product-active'>Active</FieldLabel>
+                    <FieldLabel htmlFor='product-active'>Attivo</FieldLabel>
                   </FieldTitle>
-                  <FieldDescription>Visible in the shop.</FieldDescription>
+                  <FieldDescription>Visibile nel negozio.</FieldDescription>
                 </FieldContent>
               </Field>
 
@@ -392,13 +392,13 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
           <Button type='submit' disabled={isPending}>
             {isPending && <Loader2Icon data-icon='inline-start' className='animate-spin' />}
             {isPending
-              ? 'Saving…'
+              ? 'Salvataggio…'
               : mode === 'create'
-                ? 'Create product'
-                : 'Save changes'}
+                ? 'Crea prodotto'
+                : 'Salva modifiche'}
           </Button>
           <Button asChild variant='ghost' size='sm'>
-            <Link href='/admin/products'>Cancel</Link>
+            <Link href='/admin/products'>Annulla</Link>
           </Button>
           {mode === 'edit' && (
             <Button
@@ -410,7 +410,7 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
               className='ml-auto'
             >
               <Trash2Icon data-icon='inline-start' />
-              Delete
+              Elimina
             </Button>
           )}
         </CardFooter>
@@ -419,7 +419,7 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
       <Card size='sm' className='h-fit'>
         <CardHeader>
           <CardTitle className='uppercase tracking-widest text-muted-foreground text-xs'>
-            Images
+            Immagini
           </CardTitle>
         </CardHeader>
         <CardContent className='flex flex-col gap-3'>
@@ -442,7 +442,7 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
                   variant='destructive'
                   size='icon-sm'
                   className='absolute right-1 top-1 opacity-0 transition group-hover:opacity-100'
-                  aria-label='Remove image'
+                  aria-label='Rimuovi immagine'
                 >
                   <XIcon />
                 </Button>
@@ -454,7 +454,7 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
               ) : (
                 <UploadIcon className='size-5' />
               )}
-              <span>{uploading ? 'Uploading…' : 'Upload image'}</span>
+              <span>{uploading ? 'Caricamento…' : 'Carica immagine'}</span>
               <input
                 ref={fileInput}
                 type='file'
@@ -466,7 +466,7 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
             </label>
           </div>
           <FieldDescription>
-            First image is used as the cover. Max 5MB each.
+            La prima immagine è usata come copertina. Max 5MB ciascuna.
           </FieldDescription>
         </CardContent>
       </Card>

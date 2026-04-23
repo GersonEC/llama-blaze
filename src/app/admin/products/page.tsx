@@ -26,15 +26,15 @@ export default async function AdminProductsPage() {
     <div className='flex flex-col gap-6'>
       <header className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-semibold'>Products</h1>
+          <h1 className='text-3xl font-semibold'>Prodotti</h1>
           <p className='mt-1 text-sm text-muted-foreground'>
-            {products.length} total · {products.filter((p) => p.active).length} active
+            {products.length} totali · {products.filter((p) => p.active).length} attivi
           </p>
         </div>
         <Button asChild>
           <Link href='/admin/products/new'>
             <PlusIcon data-icon='inline-start' />
-            New product
+            Nuovo prodotto
           </Link>
         </Button>
       </header>
@@ -42,8 +42,8 @@ export default async function AdminProductsPage() {
       {products.length === 0 ? (
         <Empty className='border'>
           <EmptyHeader>
-            <EmptyTitle>No products yet</EmptyTitle>
-            <EmptyDescription>Create your first one to fill the shop.</EmptyDescription>
+            <EmptyTitle>Nessun prodotto</EmptyTitle>
+            <EmptyDescription>Crea il primo per riempire il negozio.</EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : (
@@ -77,16 +77,16 @@ export default async function AdminProductsPage() {
                   <div className='w-24 text-right text-sm tabular-nums'>
                     {formatMoney(p.price)}
                   </div>
-                  <div className='w-16 text-right text-sm tabular-nums'>
+                  <div className='w-20 text-right text-sm tabular-nums'>
                     <span className={p.stock === 0 ? 'text-destructive' : ''}>{p.stock}</span>
-                    <span className='text-muted-foreground'> left</span>
+                    <span className='text-muted-foreground'> rimasti</span>
                   </div>
                   <div className='w-20 text-right'>
                     <Badge
                       variant={p.active ? 'default' : 'secondary'}
                       className='uppercase tracking-wider'
                     >
-                      {p.active ? 'Active' : 'Hidden'}
+                      {p.active ? 'Attivo' : 'Nascosto'}
                     </Badge>
                   </div>
                 </li>

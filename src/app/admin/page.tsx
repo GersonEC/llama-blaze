@@ -6,6 +6,7 @@ import {
   listReservations,
 } from '@/lib/repositories/reservations';
 import { formatDateTime, formatMoney } from '@/lib/format';
+import { RESERVATION_STATUS_LABELS } from '@/lib/domain';
 import { StatusPill } from '@/components/admin/StatusPill';
 import {
   Card,
@@ -31,15 +32,15 @@ export default async function AdminDashboardPage() {
   return (
     <div className='flex flex-col gap-10'>
       <header>
-        <h1 className='text-3xl font-semibold'>Overview</h1>
+        <h1 className='text-3xl font-semibold'>Panoramica</h1>
         <p className='mt-1 text-sm text-muted-foreground'>
-          What&apos;s happening in the shop right now.
+          Cosa sta succedendo nel negozio in questo momento.
         </p>
       </header>
 
       <section>
         <h2 className='mb-3 text-sm font-semibold uppercase tracking-widest text-muted-foreground'>
-          Reservations by status
+          Prenotazioni per stato
         </h2>
         <div className='grid grid-cols-2 gap-3 sm:grid-cols-5'>
           {(['pending', 'contacted', 'confirmed', 'completed', 'cancelled'] as const).map(
@@ -48,7 +49,7 @@ export default async function AdminDashboardPage() {
                 <Card size='sm' className='transition hover:ring-primary/40'>
                   <CardHeader>
                     <CardDescription className='text-xs uppercase tracking-widest'>
-                      {status}
+                      {RESERVATION_STATUS_LABELS[status]}
                     </CardDescription>
                     <CardTitle className='text-3xl tabular-nums'>
                       {counts[status]}
@@ -64,19 +65,19 @@ export default async function AdminDashboardPage() {
       <section>
         <div className='mb-3 flex items-center justify-between'>
           <h2 className='text-sm font-semibold uppercase tracking-widest text-muted-foreground'>
-            Latest reservations
+            Ultime prenotazioni
           </h2>
           <Button asChild variant='link' size='sm'>
-            <Link href='/admin/reservations'>View all →</Link>
+            <Link href='/admin/reservations'>Vedi tutte →</Link>
           </Button>
         </div>
 
         {recent.length === 0 ? (
           <Empty>
             <EmptyHeader>
-              <EmptyTitle>No reservations yet</EmptyTitle>
+              <EmptyTitle>Nessuna prenotazione</EmptyTitle>
               <EmptyDescription>
-                When someone reserves something, it will show up here.
+                Quando qualcuno prenota qualcosa, apparirà qui.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -84,7 +85,9 @@ export default async function AdminDashboardPage() {
           <Card>
             <CardContent>
               <ul className='flex flex-col divide-y divide-border -my-4'>
-                {recent.map((r) => (
+                {recent.map((r) => {
+                  const itemCount = r.items.reduce((n, i) => n + i.quantity, 0);
+                  return (
                   <li key={r.id} className='flex items-center justify-between gap-4 py-3'>
                     <div className='min-w-0 flex-1'>
                       <Button
@@ -96,7 +99,7 @@ export default async function AdminDashboardPage() {
                         <Link href={`/admin/reservations/${r.id}`}>{r.customer.name}</Link>
                       </Button>
                       <p className='truncate text-sm text-muted-foreground'>
-                        {r.items.reduce((n, i) => n + i.quantity, 0)} item(s) ·{' '}
+                        {itemCount} {itemCount === 1 ? 'articolo' : 'articoli'} ·{' '}
                         {formatDateTime(r.createdAt)}
                       </p>
                     </div>
@@ -105,7 +108,8 @@ export default async function AdminDashboardPage() {
                       {formatMoney(r.total)}
                     </p>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             </CardContent>
           </Card>

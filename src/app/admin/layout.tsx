@@ -29,28 +29,28 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </Button>
           <nav className='flex items-center gap-1'>
             <Button asChild variant='ghost' size='sm'>
-              <Link href='/admin'>Overview</Link>
+              <Link href='/admin'>Panoramica</Link>
             </Button>
             <Button asChild variant='ghost' size='sm'>
-              <Link href='/admin/reservations'>Reservations</Link>
+              <Link href='/admin/reservations'>Prenotazioni</Link>
             </Button>
             <Button asChild variant='ghost' size='sm'>
-              <Link href='/admin/products'>Products</Link>
+              <Link href='/admin/products'>Prodotti</Link>
             </Button>
             <Button asChild variant='ghost' size='sm'>
-              <Link href='/'>View shop</Link>
+              <Link href='/'>Vai al negozio</Link>
             </Button>
             <Separator orientation='vertical' className='mx-1 h-5' />
             <form action={signOutAction}>
               <Button type='submit' variant='ghost' size='sm'>
                 <LogOutIcon data-icon='inline-start' />
-                Sign out
+                Esci
               </Button>
             </form>
           </nav>
         </div>
         <p className='mx-auto max-w-6xl px-4 pb-2 text-xs text-muted-foreground sm:px-6 lg:px-8'>
-          Signed in as {user.email}
+          Accesso effettuato come {user.email}
         </p>
       </header>
 

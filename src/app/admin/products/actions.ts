@@ -45,7 +45,7 @@ async function upsertInternal(
     for (const issue of parsed.error.issues) {
       (fieldErrors[issue.path.join('.')] ??= []).push(issue.message);
     }
-    return { ok: false, error: 'Please correct the highlighted fields.', fieldErrors };
+    return { ok: false, error: 'Correggi i campi evidenziati.', fieldErrors };
   }
 
   try {
@@ -58,12 +58,12 @@ async function upsertInternal(
     revalidatePath(`/shop/${product.slug}`);
     return { ok: true, productId: product.id };
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
+    const message = err instanceof Error ? err.message : 'Errore sconosciuto';
     if (/duplicate key/i.test(message) && /slug/i.test(message)) {
       return {
         ok: false,
-        error: 'That slug is already in use.',
-        fieldErrors: { slug: ['Must be unique'] },
+        error: 'Questo slug è già in uso.',
+        fieldErrors: { slug: ['Deve essere univoco'] },
       };
     }
     return { ok: false, error: message };
@@ -93,11 +93,11 @@ export async function deleteProductAction(productId: string): Promise<ProductAct
     revalidatePath('/admin/products');
     revalidatePath('/shop');
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
+    const message = err instanceof Error ? err.message : 'Errore sconosciuto';
     if (/violates foreign key/i.test(message)) {
       return {
         ok: false,
-        error: "Can't delete — this product has reservations. Deactivate it instead.",
+        error: 'Impossibile eliminare: il prodotto ha delle prenotazioni. Disattivalo invece.',
       };
     }
     return { ok: false, error: message };
@@ -117,13 +117,13 @@ export async function uploadProductImageAction(
   const slug = formData.get('slug');
   const parsed = UploadSchema.safeParse({ slug });
   if (!(file instanceof File) || file.size === 0 || !parsed.success) {
-    return { ok: false, error: 'Invalid upload.' };
+    return { ok: false, error: 'Caricamento non valido.' };
   }
   if (file.size > 5 * 1024 * 1024) {
-    return { ok: false, error: 'Image must be 5MB or smaller.' };
+    return { ok: false, error: "L'immagine deve essere di 5MB o meno." };
   }
   if (!/^image\//.test(file.type)) {
-    return { ok: false, error: 'Only image files are allowed.' };
+    return { ok: false, error: 'Sono consentiti solo file immagine.' };
   }
 
   try {
@@ -131,7 +131,7 @@ export async function uploadProductImageAction(
     const path = await uploadProductImage(supabase, file, parsed.data.slug);
     return { ok: true, path };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : 'Upload failed' };
+    return { ok: false, error: err instanceof Error ? err.message : 'Caricamento non riuscito' };
   }
 }
 
@@ -144,6 +144,6 @@ export async function removeProductImageAction(
     await removeProductImage(supabase, path);
     return { ok: true };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : 'Remove failed' };
+    return { ok: false, error: err instanceof Error ? err.message : 'Rimozione non riuscita' };
   }
 }

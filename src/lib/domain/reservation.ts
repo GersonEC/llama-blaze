@@ -31,6 +31,18 @@ export function isReservationStatus(value: string): value is ReservationStatus {
   return (RESERVATION_STATUSES as readonly string[]).includes(value);
 }
 
+/**
+ * Italian labels for reservation statuses. The enum values stay in English
+ * (they mirror the Postgres enum), but the UI renders the translated label.
+ */
+export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
+  pending: 'In attesa',
+  contacted: 'Contattato',
+  confirmed: 'Confermato',
+  completed: 'Completato',
+  cancelled: 'Annullato',
+};
+
 export interface Customer {
   readonly name: string;
   readonly email: string;

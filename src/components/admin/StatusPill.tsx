@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import type { ReservationStatus } from '@/lib/domain';
+import { RESERVATION_STATUS_LABELS, type ReservationStatus } from '@/lib/domain';
 
 type BadgeVariant = React.ComponentProps<typeof Badge>['variant'];
 
@@ -14,7 +14,7 @@ const VARIANTS: Record<ReservationStatus, BadgeVariant> = {
 export function StatusPill({ status }: { status: ReservationStatus }) {
   return (
     <Badge variant={VARIANTS[status]} className='uppercase tracking-wider'>
-      {status}
+      {RESERVATION_STATUS_LABELS[status]}
     </Badge>
   );
 }

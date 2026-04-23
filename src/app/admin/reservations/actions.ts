@@ -18,7 +18,7 @@ export async function updateReservationStatusAction(
   await requireAdmin();
   const parsed = ReservationStatusUpdateSchema.safeParse({ reservationId, status });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Dati non validi' };
   }
 
   try {
@@ -29,6 +29,6 @@ export async function updateReservationStatusAction(
     revalidatePath(`/admin/reservations/${parsed.data.reservationId}`);
     return { ok: true };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { ok: false, error: err instanceof Error ? err.message : 'Errore sconosciuto' };
   }
 }
