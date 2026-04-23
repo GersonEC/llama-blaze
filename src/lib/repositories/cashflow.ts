@@ -41,6 +41,7 @@ export async function listCompletedReservationEntries(
         productId: item.product_id,
         productName: item.product_name_snapshot,
         amountCents: item.unit_price_cents_snapshot * item.quantity,
+        quantity: item.quantity,
         date,
       });
     }
@@ -81,6 +82,7 @@ export async function listPurchaseEntries(
     productName: row.products?.name ?? 'Prodotto eliminato',
     amountCents:
       (row.unit_cost_cents + row.shipping_cost_cents) * row.quantity,
+    quantity: row.quantity,
     date: new Date(row.purchased_at),
   }));
 }

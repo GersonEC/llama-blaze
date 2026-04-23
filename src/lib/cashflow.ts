@@ -13,6 +13,8 @@ export interface CashflowEntry {
   readonly productName: string;
   /** Positive cents. Direction (in vs out) is implied by the bucket the entry goes into. */
   readonly amountCents: number;
+  /** Units moved (sold for entrate, purchased for uscite). Optional; defaults to 0 when unknown. */
+  readonly quantity?: number;
   readonly date: Date;
 }
 
@@ -22,6 +24,8 @@ export interface CashflowProductRow {
   readonly productName: string;
   readonly perMonthCents: readonly number[];
   readonly totalCents: number;
+  /** Total units across all entries in the stream. */
+  readonly unitsSold: number;
 }
 
 /** Everything the page + chart + table need to render, derived in one pass. */
@@ -67,7 +71,7 @@ function aggregateStream(
 } {
   const byProduct = new Map<
     string,
-    { name: string; perMonth: number[]; total: number }
+    { name: string; perMonth: number[]; total: number; units: number }
   >();
   const perMonth = emptyMonths();
   let total = 0;
@@ -77,11 +81,17 @@ function aggregateStream(
     const month = entry.date.getMonth();
     let bucket = byProduct.get(entry.productId);
     if (!bucket) {
-      bucket = { name: entry.productName, perMonth: emptyMonths(), total: 0 };
+      bucket = {
+        name: entry.productName,
+        perMonth: emptyMonths(),
+        total: 0,
+        units: 0,
+      };
       byProduct.set(entry.productId, bucket);
     }
     bucket.perMonth[month] += entry.amountCents;
     bucket.total += entry.amountCents;
+    bucket.units += entry.quantity ?? 0;
     perMonth[month] += entry.amountCents;
     total += entry.amountCents;
   }
@@ -91,6 +101,7 @@ function aggregateStream(
     productName: b.name,
     perMonthCents: b.perMonth,
     totalCents: b.total,
+    unitsSold: b.units,
   })).sort((a, b) => b.totalCents - a.totalCents);
 
   return { rows, perMonth, total };
