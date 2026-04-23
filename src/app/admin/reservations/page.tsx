@@ -1,7 +1,10 @@
-import Link from 'next/link';
+import { DownloadIcon } from 'lucide-react';
 import { requireAdmin } from '@/lib/auth';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
-import { listReservations } from '@/lib/repositories/reservations';
+import {
+  countReservationsByStatus,
+  listReservations,
+} from '@/lib/repositories/reservations';
 import { formatDateTime, formatMoney } from '@/lib/format';
 import {
   isReservationStatus,
@@ -10,11 +13,26 @@ import {
   type ReservationStatus,
 } from '@/lib/domain';
 import { StatusPill } from '@/components/admin/StatusPill';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
+import {
+  FilterChips,
+  type FilterChip,
+} from '@/components/admin/FilterChips';
+import {
+  DataTableBody,
+  DataTableFooter,
+  DataTableHeader,
+  DataTableHeaderCell,
+  DataTableRow,
+  DataTableRowChevron,
+} from '@/components/admin/DataTable';
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 
 export const dynamic = 'force-dynamic';
+
+// Shared grid template so header and each row stay aligned.
+// Columns: customer | items | date | status | total | chevron
+const GRID_COLS =
+  'md:grid-cols-[minmax(0,2fr)_110px_170px_120px_110px_32px]';
 
 export default async function ReservationsPage({
   searchParams,
@@ -27,77 +45,119 @@ export default async function ReservationsPage({
     statusParam && isReservationStatus(statusParam) ? statusParam : undefined;
 
   const supabase = await getSupabaseServerClient();
-  const reservations = await listReservations(supabase, status ? { status } : {});
+  const [reservations, counts] = await Promise.all([
+    listReservations(supabase, status ? { status } : {}),
+    countReservationsByStatus(supabase),
+  ]);
+
+  const totalAll = RESERVATION_STATUSES.reduce((n, s) => n + counts[s], 0);
+
+  const chips: FilterChip<ReservationStatus>[] = [
+    { id: 'all', label: 'Tutte', count: totalAll, href: '/admin/reservations' },
+    ...RESERVATION_STATUSES.map<FilterChip<ReservationStatus>>((s) => ({
+      id: s,
+      label: RESERVATION_STATUS_LABELS[s],
+      count: counts[s],
+      href: `/admin/reservations?status=${s}`,
+    })),
+  ];
 
   return (
-    <div className='flex flex-col gap-6'>
-      <header>
-        <h1 className='text-3xl font-semibold'>Prenotazioni</h1>
-        <p className='mt-1 text-sm text-muted-foreground'>
-          {reservations.length} {status ? `${RESERVATION_STATUS_LABELS[status].toLowerCase()} · ` : ''}
-          {reservations.length === 1 ? 'prenotazione' : 'prenotazioni'}
-        </p>
+    <div className='flex flex-col gap-7'>
+      <header className='flex flex-wrap items-end justify-between gap-4'>
+        <div>
+          <h1 className='text-3xl font-semibold tracking-tight'>Prenotazioni</h1>
+          <p className='mt-1.5 text-sm text-muted-foreground'>
+            <span className='font-semibold text-foreground tabular-nums'>{totalAll}</span>{' '}
+            {totalAll === 1 ? 'prenotazione' : 'prenotazioni'}
+            {' · '}
+            <span className='font-semibold text-foreground tabular-nums'>
+              {counts.pending}
+            </span>{' '}
+            in attesa
+          </p>
+        </div>
+        <button
+          type='button'
+          className='inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground/80 transition-colors hover:border-foreground hover:text-foreground'
+        >
+          <DownloadIcon aria-hidden className='size-3.5' />
+          Esporta
+        </button>
       </header>
 
-      <nav className='flex flex-wrap gap-2'>
-        <Button asChild variant={!status ? 'default' : 'outline'} size='sm'>
-          <Link href='/admin/reservations'>Tutte</Link>
-        </Button>
-        {RESERVATION_STATUSES.map((s) => (
-          <Button
-            key={s}
-            asChild
-            variant={status === s ? 'default' : 'outline'}
-            size='sm'
-          >
-            <Link href={`/admin/reservations?status=${s}`}>
-              {RESERVATION_STATUS_LABELS[s]}
-            </Link>
-          </Button>
-        ))}
-      </nav>
+      <FilterChips chips={chips} activeId={status ?? 'all'} />
 
       {reservations.length === 0 ? (
-        <Empty className='border'>
+        <Empty className='border border-dashed'>
           <EmptyHeader>
-            <EmptyTitle>Nessuna prenotazione qui</EmptyTitle>
+            <EmptyTitle>Nessuna prenotazione</EmptyTitle>
+            <EmptyDescription>
+              Non ci sono prenotazioni che corrispondono a questo filtro.
+            </EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : (
-        <Card>
-          <CardContent>
-            <ul className='flex flex-col divide-y divide-border -my-4'>
-              {reservations.map((r) => (
-                <li key={r.id}>
-                  <Link
-                    href={`/admin/reservations/${r.id}`}
-                    className='-mx-2 flex items-center gap-4 rounded-2xl px-2 py-3 transition hover:bg-muted/50'
-                  >
-                    <div className='min-w-0 flex-1'>
-                      <p className='font-medium'>{r.customer.name}</p>
-                      <p className='truncate text-sm text-muted-foreground'>
-                        {r.customer.email} · {r.customer.phone}
-                      </p>
-                    </div>
-                    <p className='hidden text-sm text-muted-foreground sm:block'>
-                      {(() => {
-                        const n = r.items.reduce((a, i) => a + i.quantity, 0);
-                        return `${n} ${n === 1 ? 'articolo' : 'articoli'}`;
-                      })()}
+        <div>
+          <DataTableHeader className={GRID_COLS}>
+            <DataTableHeaderCell>Cliente</DataTableHeaderCell>
+            <DataTableHeaderCell>Articoli</DataTableHeaderCell>
+            <DataTableHeaderCell>Data richiesta</DataTableHeaderCell>
+            <DataTableHeaderCell>Stato</DataTableHeaderCell>
+            <DataTableHeaderCell align='right'>Totale</DataTableHeaderCell>
+            <DataTableHeaderCell />
+          </DataTableHeader>
+
+          <DataTableBody>
+            {reservations.map((r) => {
+              const itemCount = r.items.reduce((n, i) => n + i.quantity, 0);
+              return (
+                <DataTableRow
+                  key={r.id}
+                  href={`/admin/reservations/${r.id}`}
+                  className={`grid-cols-[minmax(0,1fr)_auto] ${GRID_COLS}`}
+                >
+                  <div className='min-w-0'>
+                    <h4 className='truncate text-sm font-semibold tracking-[-0.005em]'>
+                      {r.customer.name}
+                    </h4>
+                    <p className='mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+                      <span className='truncate'>{r.customer.email}</span>
+                      <span
+                        aria-hidden
+                        className='size-[3px] shrink-0 rounded-full bg-muted-foreground/60'
+                      />
+                      <span className='truncate'>{r.customer.phone}</span>
                     </p>
-                    <p className='hidden text-sm text-muted-foreground md:block'>
-                      {formatDateTime(r.createdAt)}
-                    </p>
+                  </div>
+                  <div className='hidden text-sm text-muted-foreground md:block'>
+                    <span className='font-medium text-foreground'>{itemCount}</span>{' '}
+                    {itemCount === 1 ? 'articolo' : 'articoli'}
+                  </div>
+                  <div className='hidden text-sm text-muted-foreground tabular-nums md:block'>
+                    {formatDateTime(r.createdAt)}
+                  </div>
+                  <div className='md:justify-self-start'>
                     <StatusPill status={r.status} />
-                    <p className='w-24 text-right font-semibold tabular-nums'>
+                  </div>
+                  <div className='col-span-2 flex items-center justify-between text-xs text-muted-foreground md:col-span-1 md:block md:text-right'>
+                    <span className='md:hidden'>
+                      <span className='font-medium text-foreground'>{itemCount}</span>{' '}
+                      {itemCount === 1 ? 'articolo' : 'articoli'} ·{' '}
+                      {formatDateTime(r.createdAt)}
+                    </span>
+                    <span className='text-sm font-semibold text-foreground tabular-nums'>
                       {formatMoney(r.total)}
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+                    </span>
+                  </div>
+                  <DataTableRowChevron />
+                </DataTableRow>
+              );
+            })}
+          </DataTableBody>
+
+          <DataTableFooter updatedLabel='Aggiornato pochi secondi fa' />
+        </div>
       )}
     </div>
   );
