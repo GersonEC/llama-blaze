@@ -37,6 +37,8 @@ export type Database = {
           active: boolean;
           category: Database['public']['Enums']['product_category'] | null;
           discount_percentage: number | null;
+          acquisition_cost_cents: number | null;
+          shipping_cost_cents: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -52,6 +54,8 @@ export type Database = {
           active?: boolean;
           category?: Database['public']['Enums']['product_category'] | null;
           discount_percentage?: number | null;
+          acquisition_cost_cents?: number | null;
+          shipping_cost_cents?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -67,10 +71,56 @@ export type Database = {
           active?: boolean;
           category?: Database['public']['Enums']['product_category'] | null;
           discount_percentage?: number | null;
+          acquisition_cost_cents?: number | null;
+          shipping_cost_cents?: number | null;
           created_at?: string;
           updated_at?: string;
         };
         Relationships: [];
+      };
+      product_purchases: {
+        Row: {
+          id: string;
+          product_id: string;
+          purchased_at: string;
+          quantity: number;
+          unit_cost_cents: number;
+          shipping_cost_cents: number;
+          currency: string;
+          notes: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          purchased_at?: string;
+          quantity: number;
+          unit_cost_cents: number;
+          shipping_cost_cents?: number;
+          currency?: string;
+          notes?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          product_id?: string;
+          purchased_at?: string;
+          quantity?: number;
+          unit_cost_cents?: number;
+          shipping_cost_cents?: number;
+          currency?: string;
+          notes?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'product_purchases_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       reservations: {
         Row: {
@@ -171,6 +221,17 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
+      };
+      record_product_purchase: {
+        Args: {
+          p_product_id: string;
+          p_quantity: number;
+          p_unit_cost_cents: number;
+          p_shipping_cost_cents: number;
+          p_purchased_at?: string | null;
+          p_notes?: string | null;
+        };
+        Returns: string;
       };
     };
     Enums: {

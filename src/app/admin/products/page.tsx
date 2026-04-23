@@ -4,7 +4,8 @@ import { PlusIcon } from 'lucide-react';
 import { requireAdmin } from '@/lib/auth';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { listAllProducts } from '@/lib/repositories/products';
-import { formatMoney } from '@/lib/format';
+import { cents, finalPriceCents, unitCostCents } from '@/lib/domain';
+import { formatMoney, formatPriceCents } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -50,7 +51,11 @@ export default async function AdminProductsPage() {
         <Card>
           <CardContent>
             <ul className='flex flex-col divide-y divide-border -my-4'>
-              {products.map((p) => (
+              {products.map((p) => {
+                const cost = unitCostCents(p);
+                const sellingCents = finalPriceCents(p.price.amount, p.discountPercentage);
+                const marginCents = cost == null ? null : sellingCents - cost;
+                return (
                 <li key={p.id} className='flex items-center gap-4 py-3'>
                   <div className='relative size-16 shrink-0 overflow-hidden rounded-2xl bg-muted'>
                     {p.images[0] ? (
@@ -77,6 +82,22 @@ export default async function AdminProductsPage() {
                   <div className='w-24 text-right text-sm tabular-nums'>
                     {formatMoney(p.price)}
                   </div>
+                  <div
+                    className='hidden w-24 text-right text-sm tabular-nums sm:block'
+                    title='Margine per unità (prezzo di vendita − costo di acquisto − spedizione)'
+                  >
+                    {marginCents == null ? (
+                      <span className='text-muted-foreground'>—</span>
+                    ) : (
+                      <span className={marginCents < 0 ? 'text-destructive' : ''}>
+                        {marginCents < 0 ? '−' : ''}
+                        {formatPriceCents(
+                          cents(Math.abs(marginCents)),
+                          p.price.currency,
+                        )}
+                      </span>
+                    )}
+                  </div>
                   <div className='w-20 text-right text-sm tabular-nums'>
                     <span className={p.stock === 0 ? 'text-destructive' : ''}>{p.stock}</span>
                     <span className='text-muted-foreground'> rimasti</span>
@@ -90,7 +111,8 @@ export default async function AdminProductsPage() {
                     </Badge>
                   </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </CardContent>
         </Card>

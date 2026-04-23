@@ -156,6 +156,8 @@ export async function createProduct(client: Client, draft: ProductDraft): Promis
     active: draft.active,
     category: draft.category,
     discount_percentage: draft.discountPercentage,
+    acquisition_cost_cents: draft.acquisitionCostCents,
+    shipping_cost_cents: draft.shippingCostCents,
   };
   const { data, error } = await client
     .from('products')
@@ -183,6 +185,8 @@ export async function updateProduct(
     active: draft.active,
     category: draft.category,
     discount_percentage: draft.discountPercentage,
+    acquisition_cost_cents: draft.acquisitionCostCents,
+    shipping_cost_cents: draft.shippingCostCents,
   };
   const { data, error } = await client
     .from('products')

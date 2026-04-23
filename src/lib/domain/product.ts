@@ -70,6 +70,14 @@ export interface Product {
   readonly category: ProductCategory | null;
   /** Integer in `1..90`; `null` means no discount is active. */
   readonly discountPercentage: number | null;
+  /**
+   * Latest per-unit acquisition cost paid to the supplier. `null` means never
+   * recorded. Updated automatically by `record_product_purchase` so form
+   * defaults and margin calculations track reality.
+   */
+  readonly acquisitionCost: Money | null;
+  /** Latest per-unit shipping cost paid to bring stock in. `null` means none recorded. */
+  readonly shippingCost: Money | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -87,6 +95,10 @@ export interface ProductDraft {
   readonly active: boolean;
   readonly category: ProductCategory | null;
   readonly discountPercentage: number | null;
+  /** Latest per-unit acquisition cost in cents, or `null` to clear. */
+  readonly acquisitionCostCents: number | null;
+  /** Latest per-unit shipping cost in cents, or `null` to clear. */
+  readonly shippingCostCents: number | null;
 }
 
 /**
@@ -100,4 +112,15 @@ export function finalPriceCents(
   if (!discountPercentage || discountPercentage <= 0) return fullPriceCents;
   const pct = Math.min(discountPercentage, 90);
   return Math.round((fullPriceCents * (100 - pct)) / 100);
+}
+
+/**
+ * Total per-unit cost (acquisition + shipping) in cents. Returns `null` when
+ * either cost hasn't been recorded yet — margin can't be computed without both.
+ */
+export function unitCostCents(
+  p: Pick<Product, 'acquisitionCost' | 'shippingCost'>,
+): number | null {
+  if (p.acquisitionCost == null || p.shippingCost == null) return null;
+  return p.acquisitionCost.amount + p.shippingCost.amount;
 }

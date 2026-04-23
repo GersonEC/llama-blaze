@@ -61,6 +61,8 @@ export interface ProductFormInitial {
   active: boolean;
   category: ProductCategory | null;
   discountPercentage: number | null;
+  acquisitionCostCents: number | null;
+  shippingCostCents: number | null;
 }
 
 interface ProductFormProps {
@@ -80,6 +82,8 @@ const BLANK: ProductFormInitial = {
   active: true,
   category: null,
   discountPercentage: null,
+  acquisitionCostCents: null,
+  shippingCostCents: null,
 };
 
 const UNCATEGORISED = '__uncategorised__';
@@ -96,6 +100,16 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
   const [state, setState] = useState<ProductFormInitial>(initial ?? BLANK);
   const [priceMajor, setPriceMajor] = useState<string>(
     ((initial?.priceCents ?? 0) / 100).toFixed(2),
+  );
+  const [acquisitionMajor, setAcquisitionMajor] = useState<string>(
+    initial?.acquisitionCostCents != null
+      ? (initial.acquisitionCostCents / 100).toFixed(2)
+      : '',
+  );
+  const [shippingMajor, setShippingMajor] = useState<string>(
+    initial?.shippingCostCents != null
+      ? (initial.shippingCostCents / 100).toFixed(2)
+      : '',
   );
   const [discountInput, setDiscountInput] = useState<string>(
     initial?.discountPercentage != null ? String(initial.discountPercentage) : '',
@@ -166,6 +180,25 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
       discountPercentage = n;
     }
 
+    const parseMajorToCents = (input: string): number | null | 'invalid' => {
+      const trimmed = input.trim();
+      if (trimmed === '') return null;
+      const n = Number(trimmed);
+      if (!Number.isFinite(n) || n < 0) return 'invalid';
+      return Math.round(n * 100);
+    };
+
+    const acquisitionParsed = parseMajorToCents(acquisitionMajor);
+    if (acquisitionParsed === 'invalid') {
+      setFieldErrors({ acquisitionCostCents: ['Inserisci un costo valido o lascia vuoto'] });
+      return;
+    }
+    const shippingParsed = parseMajorToCents(shippingMajor);
+    if (shippingParsed === 'invalid') {
+      setFieldErrors({ shippingCostCents: ['Inserisci un costo valido o lascia vuoto'] });
+      return;
+    }
+
     const payload = {
       slug: state.slug.trim(),
       name: state.name.trim(),
@@ -177,6 +210,8 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
       active: state.active,
       category: state.category,
       discountPercentage,
+      acquisitionCostCents: acquisitionParsed,
+      shippingCostCents: shippingParsed,
     };
 
     startTransition(async () => {
@@ -307,9 +342,13 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
                     required
                     aria-invalid={fieldErrors.stock ? true : undefined}
                   />
-                  {fieldErrors.stock && (
+                  {fieldErrors.stock ? (
                     <FieldError>{fieldErrors.stock.join(' · ')}</FieldError>
-                  )}
+                  ) : mode === 'edit' ? (
+                    <FieldDescription>
+                      Gestito dai reintegri. Modifica manualmente solo per correzioni.
+                    </FieldDescription>
+                  ) : null}
                 </Field>
               </div>
 
@@ -361,6 +400,50 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
                   ) : (
                     <FieldDescription>
                       Lascia vuoto per nessuno sconto. 1–90 per mostrare un prezzo scontato.
+                    </FieldDescription>
+                  )}
+                </Field>
+              </div>
+
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                <Field data-invalid={fieldErrors.acquisitionCostCents ? true : undefined}>
+                  <FieldLabel htmlFor='product-acquisition-cost'>
+                    Costo di acquisto
+                  </FieldLabel>
+                  <Input
+                    id='product-acquisition-cost'
+                    value={acquisitionMajor}
+                    onChange={(e) => setAcquisitionMajor(e.target.value)}
+                    inputMode='decimal'
+                    placeholder='es. 12.50'
+                    aria-invalid={fieldErrors.acquisitionCostCents ? true : undefined}
+                  />
+                  {fieldErrors.acquisitionCostCents ? (
+                    <FieldError>{fieldErrors.acquisitionCostCents.join(' · ')}</FieldError>
+                  ) : (
+                    <FieldDescription>
+                      Per unità. Aggiornato automaticamente dai reintegri.
+                    </FieldDescription>
+                  )}
+                </Field>
+
+                <Field data-invalid={fieldErrors.shippingCostCents ? true : undefined}>
+                  <FieldLabel htmlFor='product-shipping-cost'>
+                    Costo di spedizione
+                  </FieldLabel>
+                  <Input
+                    id='product-shipping-cost'
+                    value={shippingMajor}
+                    onChange={(e) => setShippingMajor(e.target.value)}
+                    inputMode='decimal'
+                    placeholder='es. 2.00'
+                    aria-invalid={fieldErrors.shippingCostCents ? true : undefined}
+                  />
+                  {fieldErrors.shippingCostCents ? (
+                    <FieldError>{fieldErrors.shippingCostCents.join(' · ')}</FieldError>
+                  ) : (
+                    <FieldDescription>
+                      Per unità. Usato per calcolare il margine.
                     </FieldDescription>
                   )}
                 </Field>

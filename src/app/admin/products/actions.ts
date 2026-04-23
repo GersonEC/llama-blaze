@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/auth';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
-import { ProductFormSchema } from '@/lib/domain/schemas';
+import { ProductFormSchema, ProductPurchaseSchema } from '@/lib/domain/schemas';
 import type { ProductCategory } from '@/lib/domain';
 import {
   createProduct,
@@ -14,6 +14,7 @@ import {
   updateProduct,
   uploadProductImage,
 } from '@/lib/repositories/products';
+import { recordProductPurchase } from '@/lib/repositories/purchases';
 
 export interface ProductActionResult {
   readonly ok: boolean;
@@ -33,6 +34,17 @@ interface ProductFormPayload {
   active: boolean;
   category: ProductCategory | null;
   discountPercentage: number | null;
+  acquisitionCostCents: number | null;
+  shippingCostCents: number | null;
+}
+
+export interface RestockPayload {
+  productId: string;
+  purchasedAt: string | null;
+  quantity: number;
+  unitCostCents: number;
+  shippingCostCents: number;
+  notes: string;
 }
 
 async function upsertInternal(
@@ -145,5 +157,32 @@ export async function removeProductImageAction(
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Rimozione non riuscita' };
+  }
+}
+
+export async function restockProductAction(
+  input: RestockPayload,
+): Promise<ProductActionResult> {
+  await requireAdmin();
+
+  const parsed = ProductPurchaseSchema.safeParse(input);
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string[]> = {};
+    for (const issue of parsed.error.issues) {
+      (fieldErrors[issue.path.join('.')] ??= []).push(issue.message);
+    }
+    return { ok: false, error: 'Correggi i campi evidenziati.', fieldErrors };
+  }
+
+  try {
+    const supabase = await getSupabaseServerClient();
+    await recordProductPurchase(supabase, parsed.data);
+    revalidatePath('/admin/products');
+    revalidatePath(`/admin/products/${parsed.data.productId}`);
+    revalidatePath('/shop');
+    return { ok: true, productId: parsed.data.productId };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Errore sconosciuto';
+    return { ok: false, error: message };
   }
 }

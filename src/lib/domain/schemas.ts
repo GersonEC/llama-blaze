@@ -11,6 +11,13 @@ const slugSchema = z
   .max(80)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase letters, numbers, and hyphens');
 
+const nonNegativeCentsSchema = z
+  .number()
+  .int('Must be a whole number of cents')
+  .nonnegative('Cannot be negative')
+  .nullable()
+  .default(null);
+
 /** Admin form schema for creating/editing products. */
 export const ProductFormSchema = z.object({
   slug: slugSchema,
@@ -32,8 +39,36 @@ export const ProductFormSchema = z.object({
     .max(90, 'Discount cannot exceed 90%')
     .nullable()
     .default(null),
+  acquisitionCostCents: nonNegativeCentsSchema,
+  shippingCostCents: nonNegativeCentsSchema,
 });
 export type ProductFormInput = z.infer<typeof ProductFormSchema>;
+
+/** Admin form schema for recording a new restock / purchase. */
+export const ProductPurchaseSchema = z.object({
+  productId: z.string().uuid('Invalid product id'),
+  purchasedAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use yyyy-mm-dd')
+    .nullable()
+    .default(null),
+  quantity: z
+    .number()
+    .int('Quantity must be a whole number')
+    .positive('Quantity must be at least 1')
+    .max(100000),
+  unitCostCents: z
+    .number()
+    .int('Must be a whole number of cents')
+    .nonnegative('Unit cost cannot be negative'),
+  shippingCostCents: z
+    .number()
+    .int('Must be a whole number of cents')
+    .nonnegative('Shipping cost cannot be negative')
+    .default(0),
+  notes: z.string().trim().max(1000).default(''),
+});
+export type ProductPurchaseInput = z.infer<typeof ProductPurchaseSchema>;
 
 /** Public checkout payload submitted by the customer. */
 export const CheckoutInputSchema = z.object({
