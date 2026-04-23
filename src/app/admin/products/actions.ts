@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { requireAdmin } from '@/lib/auth';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { ProductFormSchema, ProductPurchaseSchema } from '@/lib/domain/schemas';
-import type { ProductCategory } from '@/lib/domain';
+import type { ProductCategory, ProductStatus } from '@/lib/domain';
 import {
   createProduct,
   deleteProduct,
@@ -31,7 +31,7 @@ interface ProductFormPayload {
   currency: string;
   stock: number;
   images: string[];
-  active: boolean;
+  status: ProductStatus;
   category: ProductCategory | null;
   discountPercentage: number | null;
   acquisitionCostCents: number | null;

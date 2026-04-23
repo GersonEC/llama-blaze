@@ -34,7 +34,7 @@ export type Database = {
           currency: string;
           stock: number;
           images: string[];
-          active: boolean;
+          status: Database['public']['Enums']['product_status'];
           category: Database['public']['Enums']['product_category'] | null;
           discount_percentage: number | null;
           acquisition_cost_cents: number | null;
@@ -51,7 +51,7 @@ export type Database = {
           currency?: string;
           stock?: number;
           images?: string[];
-          active?: boolean;
+          status?: Database['public']['Enums']['product_status'];
           category?: Database['public']['Enums']['product_category'] | null;
           discount_percentage?: number | null;
           acquisition_cost_cents?: number | null;
@@ -68,7 +68,7 @@ export type Database = {
           currency?: string;
           stock?: number;
           images?: string[];
-          active?: boolean;
+          status?: Database['public']['Enums']['product_status'];
           category?: Database['public']['Enums']['product_category'] | null;
           discount_percentage?: number | null;
           acquisition_cost_cents?: number | null;
@@ -247,6 +247,7 @@ export type Database = {
         | 'borse'
         | 'accessori'
         | 'tech';
+      product_status: 'active' | 'draft' | 'hidden';
     };
     CompositeTypes: {
       [_ in never]: never;

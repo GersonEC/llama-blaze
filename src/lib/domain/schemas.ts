@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { RESERVATION_STATUSES } from './reservation';
 import { SUPPORTED_CURRENCIES } from './money';
-import { PRODUCT_CATEGORIES } from './product';
+import { PRODUCT_CATEGORIES, PRODUCT_STATUSES } from './product';
 
 /** Kebab-case slug, 1–80 chars, used in `/shop/[slug]`. */
 const slugSchema = z
@@ -30,7 +30,7 @@ export const ProductFormSchema = z.object({
   currency: z.enum(SUPPORTED_CURRENCIES),
   stock: z.number().int().nonnegative('Stock cannot be negative'),
   images: z.array(z.string().min(1)).max(10).default([]),
-  active: z.boolean().default(true),
+  status: z.enum(PRODUCT_STATUSES).default('draft'),
   category: z.enum(PRODUCT_CATEGORIES).nullable().default(null),
   discountPercentage: z
     .number()

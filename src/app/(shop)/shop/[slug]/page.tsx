@@ -37,7 +37,7 @@ export default async function ProductPage({
   const supabase = await getSupabaseServerClient();
   const product = await findProductBySlug(supabase, slug);
 
-  if (!product || !product.active) notFound();
+  if (!product || product.status !== 'active') notFound();
 
   const related = await listRelatedProducts(supabase, {
     excludeId: product.id,

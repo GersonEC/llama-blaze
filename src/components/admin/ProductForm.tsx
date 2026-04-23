@@ -10,8 +10,11 @@ import { publicEnv } from '@/lib/env';
 import {
   PRODUCT_CATEGORIES,
   PRODUCT_CATEGORY_LABELS,
+  PRODUCT_STATUSES,
+  PRODUCT_STATUS_LABELS,
   SUPPORTED_CURRENCIES,
   type ProductCategory,
+  type ProductStatus,
 } from '@/lib/domain';
 import {
   createProductAction,
@@ -23,15 +26,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Field,
-  FieldContent,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldTitle,
 } from '@/components/ui/field';
 import {
   Select,
@@ -58,7 +58,7 @@ export interface ProductFormInitial {
   currency: string;
   stock: number;
   imagePaths: string[];
-  active: boolean;
+  status: ProductStatus;
   category: ProductCategory | null;
   discountPercentage: number | null;
   acquisitionCostCents: number | null;
@@ -79,7 +79,7 @@ const BLANK: ProductFormInitial = {
   currency: 'EUR',
   stock: 1,
   imagePaths: [],
-  active: true,
+  status: 'draft',
   category: null,
   discountPercentage: null,
   acquisitionCostCents: null,
@@ -207,7 +207,7 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
       currency: state.currency,
       stock: state.stock,
       images: state.imagePaths,
-      active: state.active,
+      status: state.status,
       category: state.category,
       discountPercentage,
       acquisitionCostCents: acquisitionParsed,
@@ -449,18 +449,33 @@ export function ProductForm({ mode, productId, initial }: ProductFormProps) {
                 </Field>
               </div>
 
-              <Field orientation='horizontal'>
-                <Checkbox
-                  id='product-active'
-                  checked={state.active}
-                  onCheckedChange={(v) => setField('active', v === true)}
-                />
-                <FieldContent>
-                  <FieldTitle>
-                    <FieldLabel htmlFor='product-active'>Attivo</FieldLabel>
-                  </FieldTitle>
-                  <FieldDescription>Visibile nel negozio.</FieldDescription>
-                </FieldContent>
+              <Field data-invalid={fieldErrors.status ? true : undefined}>
+                <FieldLabel htmlFor='product-status'>Stato</FieldLabel>
+                <Select
+                  value={state.status}
+                  onValueChange={(v) => setField('status', v as ProductStatus)}
+                >
+                  <SelectTrigger id='product-status' className='w-full sm:w-[220px]'>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {PRODUCT_STATUSES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {PRODUCT_STATUS_LABELS[s]}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                {fieldErrors.status ? (
+                  <FieldError>{fieldErrors.status.join(' · ')}</FieldError>
+                ) : (
+                  <FieldDescription>
+                    Solo i prodotti attivi sono visibili nel negozio. Bozza e nascosto
+                    restano riservati all&apos;admin.
+                  </FieldDescription>
+                )}
               </Field>
 
               {error && (

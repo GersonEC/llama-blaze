@@ -28,7 +28,7 @@ export async function listActiveProducts(client: Client): Promise<Product[]> {
   const { data, error } = await client
     .from('products')
     .select('*')
-    .eq('active', true)
+    .eq('status', 'active')
     .gt('stock', 0)
     .order('created_at', { ascending: false });
 
@@ -73,7 +73,7 @@ export async function listRelatedProducts(
     const { data, error } = await client
       .from('products')
       .select('*')
-      .eq('active', true)
+      .eq('status', 'active')
       .gt('stock', 0)
       .eq('category', category)
       .neq('id', options.excludeId)
@@ -90,7 +90,7 @@ export async function listRelatedProducts(
   const { data, error } = await client
     .from('products')
     .select('*')
-    .eq('active', true)
+    .eq('status', 'active')
     .gt('stock', 0)
     .neq('id', options.excludeId)
     .order('created_at', { ascending: false })
@@ -153,7 +153,7 @@ export async function createProduct(client: Client, draft: ProductDraft): Promis
     currency: draft.currency,
     stock: draft.stock,
     images: [...draft.images],
-    active: draft.active,
+    status: draft.status,
     category: draft.category,
     discount_percentage: draft.discountPercentage,
     acquisition_cost_cents: draft.acquisitionCostCents,
@@ -182,7 +182,7 @@ export async function updateProduct(
     currency: draft.currency,
     stock: draft.stock,
     images: [...draft.images],
-    active: draft.active,
+    status: draft.status,
     category: draft.category,
     discount_percentage: draft.discountPercentage,
     acquisition_cost_cents: draft.acquisitionCostCents,

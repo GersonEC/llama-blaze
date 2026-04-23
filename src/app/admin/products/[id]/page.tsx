@@ -55,7 +55,7 @@ export default async function EditProductPage({
           currency: product.price.currency,
           stock: product.stock,
           imagePaths: [...product.imagePaths],
-          active: product.active,
+          status: product.status,
           category: product.category,
           discountPercentage: product.discountPercentage,
           acquisitionCostCents: product.acquisitionCost?.amount ?? null,

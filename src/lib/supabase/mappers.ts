@@ -35,7 +35,7 @@ export function toProduct(
     stock: row.stock,
     images: imageUrls,
     imagePaths: row.images,
-    active: row.active,
+    status: row.status,
     category: row.category,
     discountPercentage: row.discount_percentage,
     acquisitionCost:

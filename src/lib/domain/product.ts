@@ -46,6 +46,28 @@ export function isProductCategory(value: unknown): value is ProductCategory {
 }
 
 /**
+ * Lifecycle state of a product, mirrored by the `product_status` enum in
+ * Postgres. Only `active` products are visible to the public; `draft` and
+ * `hidden` are admin-only.
+ */
+export const PRODUCT_STATUSES = ['active', 'draft', 'hidden'] as const;
+
+export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
+
+export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
+  active: 'Attivo',
+  draft: 'Bozza',
+  hidden: 'Nascosto',
+};
+
+export function isProductStatus(value: unknown): value is ProductStatus {
+  return (
+    typeof value === 'string' &&
+    (PRODUCT_STATUSES as readonly string[]).includes(value)
+  );
+}
+
+/**
  * Domain representation of a product. This is what flows through the UI and
  * server actions; DB row shapes never leak out of the data-access layer.
  */
@@ -65,7 +87,8 @@ export interface Product {
   readonly images: readonly string[];
   /** Raw Supabase Storage paths, in the same order as `images`. */
   readonly imagePaths: readonly string[];
-  readonly active: boolean;
+  /** Lifecycle state: only `active` products are visible to the public. */
+  readonly status: ProductStatus;
   /** `null` means uncategorised (won't match any category filter). */
   readonly category: ProductCategory | null;
   /** Integer in `1..90`; `null` means no discount is active. */
@@ -92,7 +115,7 @@ export interface ProductDraft {
   readonly stock: number;
   /** Storage paths (not public URLs) — mappers convert for display. */
   readonly images: readonly string[];
-  readonly active: boolean;
+  readonly status: ProductStatus;
   readonly category: ProductCategory | null;
   readonly discountPercentage: number | null;
   /** Latest per-unit acquisition cost in cents, or `null` to clear. */
