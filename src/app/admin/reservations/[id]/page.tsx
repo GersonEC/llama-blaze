@@ -34,6 +34,7 @@ export default async function AdminReservationPage({
           createdAt={reservation.createdAt}
           updatedAt={reservation.updatedAt}
           email={reservation.customer.email}
+          phone={reservation.customer.phone}
           customerName={reservation.customer.name}
         />
       </div>

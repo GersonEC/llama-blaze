@@ -25,6 +25,8 @@ import {
   DataTableRow,
   DataTableRowChevron,
 } from '@/components/admin/DataTable';
+import { WhatsappInlineButton } from '@/components/admin/reservation/WhatsappInlineButton';
+import { buildReservationWhatsappUrl } from '@/components/admin/reservation/whatsapp';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 
 export const dynamic = 'force-dynamic';
@@ -111,6 +113,11 @@ export default async function ReservationsPage({
           <DataTableBody>
             {reservations.map((r) => {
               const itemCount = r.items.reduce((n, i) => n + i.quantity, 0);
+              const whatsappUrl = buildReservationWhatsappUrl({
+                phone: r.customer.phone,
+                customerName: r.customer.name,
+                reservationId: r.id,
+              });
               return (
                 <DataTableRow
                   key={r.id}
@@ -128,6 +135,7 @@ export default async function ReservationsPage({
                         className='size-[3px] shrink-0 rounded-full bg-muted-foreground/60'
                       />
                       <span className='truncate'>{r.customer.phone}</span>
+                      {whatsappUrl && <WhatsappInlineButton url={whatsappUrl} />}
                     </p>
                   </div>
                   <div className='hidden text-sm text-muted-foreground md:block'>

@@ -297,10 +297,14 @@ function ContactForm({ items, hasMixedCurrencies }: ContactFormProps) {
                 aria-invalid={fieldErrors['customer.phone'] ? true : undefined}
               />
             </InputWithIcon>
-            {fieldErrors['customer.phone'] && (
+            {fieldErrors['customer.phone'] ? (
               <FieldError>
                 {fieldErrors['customer.phone'].join(' · ')}
               </FieldError>
+            ) : (
+              <p className='text-[12px] leading-normal text-muted-foreground'>
+                Inserisci il prefisso internazionale, es. +39 333 1234567.
+              </p>
             )}
           </Field>
 

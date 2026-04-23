@@ -2,7 +2,12 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRightIcon, Loader2Icon, MailIcon } from 'lucide-react';
+import {
+  ArrowRightIcon,
+  Loader2Icon,
+  MailIcon,
+  MessageCircleIcon,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Card,
@@ -20,6 +25,7 @@ import { updateReservationStatusAction } from '@/app/admin/reservations/actions'
 import { StatusTimeline } from './StatusTimeline';
 import { ADVANCE_LABEL, nextStatus } from './statusSteps';
 import { buildReservationMailto } from './mailto';
+import { buildReservationWhatsappUrl } from './whatsapp';
 
 interface StatusTransitionCardProps {
   readonly reservationId: string;
@@ -27,6 +33,7 @@ interface StatusTransitionCardProps {
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly email: string;
+  readonly phone: string;
   readonly customerName: string;
 }
 
@@ -42,6 +49,7 @@ export function StatusTransitionCard({
   createdAt,
   updatedAt,
   email,
+  phone,
   customerName,
 }: StatusTransitionCardProps) {
   const router = useRouter();
@@ -74,6 +82,11 @@ export function StatusTransitionCard({
   }
 
   const mailto = buildReservationMailto({ email, customerName, reservationId });
+  const whatsappUrl = buildReservationWhatsappUrl({
+    phone,
+    customerName,
+    reservationId,
+  });
 
   return (
     <Card size='sm' className='h-fit lg:sticky lg:top-6'>
@@ -115,6 +128,18 @@ export function StatusTransitionCard({
               Scrivi un&apos;email
             </a>
           </Button>
+          {whatsappUrl && (
+            <Button asChild variant='outline' className='w-full'>
+              <a
+                href={whatsappUrl}
+                target='_blank'
+                rel='noopener noreferrer'
+              >
+                <MessageCircleIcon data-icon='inline-start' />
+                Scrivi su WhatsApp
+              </a>
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
