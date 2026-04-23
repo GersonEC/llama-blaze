@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
 import { toReservation } from '@/lib/supabase/mappers';
+import { productImagePublicUrl } from '@/lib/repositories/products';
 import type {
   NewReservationInput,
   Reservation,
@@ -49,7 +50,25 @@ export async function findReservationById(
   if (rowErr) throw rowErr;
   if (itemsErr) throw itemsErr;
   if (!row) return null;
-  return toReservation(row, items ?? []);
+
+  const productIds = Array.from(new Set((items ?? []).map((i) => i.product_id)));
+  const thumbnailsByProductId = new Map<string, string | null>();
+  if (productIds.length > 0) {
+    const { data: products, error: productsErr } = await client
+      .from('products')
+      .select('id, images')
+      .in('id', productIds);
+    if (productsErr) throw productsErr;
+    for (const product of products ?? []) {
+      const firstPath = product.images?.[0];
+      thumbnailsByProductId.set(
+        product.id,
+        firstPath ? productImagePublicUrl(client, firstPath) : null,
+      );
+    }
+  }
+
+  return toReservation(row, items ?? [], thumbnailsByProductId);
 }
 
 export interface ListReservationsFilters {

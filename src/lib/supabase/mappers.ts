@@ -68,6 +68,7 @@ export function toProductPurchase(row: Tables<'product_purchases'>): ProductPurc
 export function toReservationItem(
   row: Tables<'reservation_items'>,
   currency: string,
+  thumbnailUrl?: string | null,
 ): ReservationItem {
   return {
     productId: asProductId(row.product_id),
@@ -78,12 +79,14 @@ export function toReservationItem(
       currency: asCurrency(currency),
     },
     quantity: row.quantity,
+    thumbnailUrl: thumbnailUrl ?? null,
   };
 }
 
 export function toReservation(
   row: Tables<'reservations'>,
   itemRows: readonly Tables<'reservation_items'>[],
+  thumbnailsByProductId?: ReadonlyMap<string, string | null>,
 ): Reservation {
   const customer: Customer = {
     name: row.customer_name,
@@ -96,7 +99,9 @@ export function toReservation(
     id: asReservationId(row.id),
     status: row.status,
     customer,
-    items: itemRows.map((item) => toReservationItem(item, row.currency)),
+    items: itemRows.map((item) =>
+      toReservationItem(item, row.currency, thumbnailsByProductId?.get(item.product_id) ?? null),
+    ),
     total: {
       amount: cents(row.total_cents),
       currency: asCurrency(row.currency),

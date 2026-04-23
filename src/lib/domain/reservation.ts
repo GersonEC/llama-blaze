@@ -56,6 +56,8 @@ export interface ReservationItem {
   readonly productName: string;
   readonly unitPrice: Money;
   readonly quantity: number;
+  /** Resolved public URL of the first product image. `null` when unavailable. */
+  readonly thumbnailUrl?: string | null;
 }
 
 export interface Reservation {
