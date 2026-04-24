@@ -68,11 +68,11 @@ export function ProductCard({
     <Link
       href={href}
       className={cn(
-        'group relative flex flex-col gap-3.5 focus:outline-none',
+        'group relative flex flex-col focus:outline-none',
         className,
       )}
     >
-      <div className='relative aspect-3/4 w-full overflow-hidden border border-border bg-muted'>
+      <div className='relative aspect-3/4 w-full rounded-t-md overflow-hidden border bg-muted'>
         {imageSrc ? (
           <Image
             src={imageSrc}
@@ -103,7 +103,7 @@ export function ProductCard({
         )}
       </div>
 
-      <div className='flex flex-col gap-1'>
+      <div className='flex flex-col gap-1 bg-muted/30 border border-t-0 p-4 rounded-b-md'>
         {category && (
           <span className='text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground'>
             {category}
@@ -112,9 +112,7 @@ export function ProductCard({
         <h3 className='text-[15px] font-semibold tracking-[-0.005em] text-foreground'>
           {name}
         </h3>
-        {swatches && swatches.length > 0 && (
-          <SwatchRow swatches={swatches} />
-        )}
+        {swatches && swatches.length > 0 && <SwatchRow swatches={swatches} />}
         <div className='mt-1.5 flex items-center justify-between'>
           <ProductCardPrice
             fullPrice={fullPrice}
@@ -149,7 +147,9 @@ function ProductCardPrice({
 
   return (
     <span className='flex items-baseline gap-2 text-sm font-semibold'>
-      <s className='font-normal text-muted-foreground'>{formatMoney(fullPrice)}</s>
+      <s className='font-normal text-muted-foreground'>
+        {formatMoney(fullPrice)}
+      </s>
       <span className='text-accent'>{formatMoney(finalPrice)}</span>
       <span className='sr-only'>On sale, {discountPercentage}% off</span>
     </span>

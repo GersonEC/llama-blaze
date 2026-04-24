@@ -41,10 +41,10 @@ export default async function AdminLayout({
               <Link href='/admin/reservations'>Prenotazioni</Link>
             </Button>
             <Button asChild variant='ghost' size='sm'>
-              <Link href='/admin/products'>Prodotti</Link>
+              <Link href='/admin/cashflow'>Cashflow</Link>
             </Button>
             <Button asChild variant='ghost' size='sm'>
-              <Link href='/admin/cashflow'>Cashflow</Link>
+              <Link href='/admin/products'>Prodotti</Link>
             </Button>
             <Button asChild variant='ghost' size='sm'>
               <Link href='/'>Vai al negozio</Link>
