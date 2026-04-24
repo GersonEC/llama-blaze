@@ -92,6 +92,11 @@ export default async function ShopPage({
                   discountPercentage={product.discountPercentage}
                   stock={product.stock}
                   priority={i < 3}
+                  swatches={product.variants.map((v) => ({
+                    id: v.id,
+                    name: v.name,
+                    hex: v.hex,
+                  }))}
                 />
               </li>
             ))}

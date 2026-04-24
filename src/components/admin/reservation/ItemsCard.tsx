@@ -24,7 +24,10 @@ export function ItemsCard({ reservation }: { reservation: Reservation }) {
       <CardContent className='flex flex-col gap-3'>
         <ul className='flex flex-col divide-y divide-border'>
           {reservation.items.map((item) => (
-            <ReservationItemRow key={item.productId} item={item} />
+            <ReservationItemRow
+              key={`${item.productId}:${item.variantId ?? ''}`}
+              item={item}
+            />
           ))}
         </ul>
         <div className='flex items-baseline justify-between rounded-xl bg-muted/40 px-4 py-3.5'>

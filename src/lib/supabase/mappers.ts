@@ -3,11 +3,13 @@ import {
   asProductId,
   asProductPurchaseId,
   asProductSlug,
+  asProductVariantId,
   asReservationId,
   cents,
   type Customer,
   type Product,
   type ProductPurchase,
+  type ProductVariant,
   type Reservation,
   type ReservationItem,
 } from '@/lib/domain';
@@ -21,10 +23,15 @@ import type { Tables } from './database.types';
 export function toProduct(
   row: Tables<'products'>,
   imageUrls: readonly string[],
+  variantRows: readonly Tables<'product_variants'>[] = [],
 ): Product {
   const currency = asCurrency(row.currency);
+  const productId = asProductId(row.id);
+  const variants = [...variantRows]
+    .sort((a, b) => a.position - b.position || a.name.localeCompare(b.name))
+    .map((v) => toProductVariant(v, productId));
   return {
-    id: asProductId(row.id),
+    id: productId,
     slug: asProductSlug(row.slug),
     name: row.name,
     description: row.description,
@@ -46,8 +53,23 @@ export function toProduct(
       row.shipping_cost_cents == null
         ? null
         : { amount: cents(row.shipping_cost_cents), currency },
+    variants,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
+  };
+}
+
+export function toProductVariant(
+  row: Tables<'product_variants'>,
+  productId = asProductId(row.product_id),
+): ProductVariant {
+  return {
+    id: asProductVariantId(row.id),
+    productId,
+    name: row.name,
+    hex: row.hex,
+    stock: row.stock,
+    position: row.position,
   };
 }
 
@@ -80,6 +102,9 @@ export function toReservationItem(
     },
     quantity: row.quantity,
     thumbnailUrl: thumbnailUrl ?? null,
+    variantId: row.variant_id ? asProductVariantId(row.variant_id) : null,
+    variantName: row.variant_name_snapshot,
+    variantHex: row.variant_hex_snapshot,
   };
 }
 

@@ -19,6 +19,7 @@ export async function createReservation(
   const { data, error } = await client.rpc('create_reservation', {
     p_items: input.items.map((i) => ({
       product_id: i.productId,
+      variant_id: i.variantId ?? null,
       quantity: i.quantity,
     })),
     p_customer: {

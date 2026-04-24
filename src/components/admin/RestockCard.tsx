@@ -4,7 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { Loader2Icon, PackagePlusIcon, XIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { restockProductAction } from '@/app/admin/products/actions';
+import {
+  recordVariantPurchaseAction,
+  restockProductAction,
+} from '@/app/admin/products/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,9 +18,24 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CurrentStockCard } from './CurrentStockCard';
+
+interface RestockVariantOption {
+  readonly id: string;
+  readonly name: string;
+  readonly hex: string;
+  readonly stock: number;
+}
 
 interface RestockCardProps {
   productId: string;
@@ -26,6 +44,12 @@ interface RestockCardProps {
   /** Pre-fills the cost inputs from the product's last known values, if any. */
   defaultUnitCostCents: number | null;
   defaultShippingCostCents: number | null;
+  /**
+   * Color variants attached to the product. When non-empty, the restock form
+   * forces the admin to pick which variant to restock — the RPC decrements
+   * that specific variant's stock instead of the product row.
+   */
+  variants?: readonly RestockVariantOption[];
 }
 
 function centsToMajor(cents: number | null): string {
@@ -46,9 +70,12 @@ export function RestockCard({
   currentStock,
   defaultUnitCostCents,
   defaultShippingCostCents,
+  variants = [],
 }: RestockCardProps) {
   const router = useRouter();
+  const hasVariants = variants.length > 0;
   const [open, setOpen] = useState(false);
+  const [variantId, setVariantId] = useState<string>(variants[0]?.id ?? '');
   const [purchasedAt, setPurchasedAt] = useState(todayISO());
   const [quantity, setQuantity] = useState('1');
   const [unitCost, setUnitCost] = useState(centsToMajor(defaultUnitCostCents));
@@ -59,6 +86,7 @@ export function RestockCard({
   const [isPending, startTransition] = useTransition();
 
   function reset() {
+    setVariantId(variants[0]?.id ?? '');
     setPurchasedAt(todayISO());
     setQuantity('1');
     setUnitCost(centsToMajor(defaultUnitCostCents));
@@ -103,15 +131,30 @@ export function RestockCard({
     const shippingCostCentsRaw = parseMajorToCents(shippingCost, 'Costo spedizione');
     const shippingCostCents = shippingCostCentsRaw ?? 0;
 
+    if (hasVariants && !variantId) {
+      setFieldErrors({ variantId: ['Seleziona un colore'] });
+      return;
+    }
+
     startTransition(async () => {
-      const result = await restockProductAction({
-        productId,
-        purchasedAt: purchasedAt || null,
-        quantity: qty,
-        unitCostCents,
-        shippingCostCents,
-        notes: notes.trim(),
-      });
+      const result = hasVariants
+        ? await recordVariantPurchaseAction({
+            variantId,
+            productId,
+            purchasedAt: purchasedAt || null,
+            quantity: qty,
+            unitCostCents,
+            shippingCostCents,
+            notes: notes.trim(),
+          })
+        : await restockProductAction({
+            productId,
+            purchasedAt: purchasedAt || null,
+            quantity: qty,
+            unitCostCents,
+            shippingCostCents,
+            notes: notes.trim(),
+          });
 
       if (!result.ok) {
         setError(result.error ?? 'Impossibile registrare il reintegro.');
@@ -128,7 +171,11 @@ export function RestockCard({
     return (
       <CurrentStockCard
         stock={currentStock}
-        description='Registra un acquisto per aggiornare scorte e costi.'
+        description={
+          hasVariants
+            ? 'Registra un acquisto per il colore selezionato.'
+            : 'Registra un acquisto per aggiornare scorte e costi.'
+        }
         action={
           <Button
             type='button'
@@ -164,6 +211,42 @@ export function RestockCard({
           <fieldset disabled={isPending} className='flex flex-col gap-4'>
             <legend className='sr-only'>Registra acquisto</legend>
             <FieldGroup>
+              {hasVariants && (
+                <Field data-invalid={fieldErrors.variantId ? true : undefined}>
+                  <FieldLabel htmlFor='restock-variant'>Colore *</FieldLabel>
+                  <Select
+                    value={variantId}
+                    onValueChange={(v) => setVariantId(v)}
+                  >
+                    <SelectTrigger id='restock-variant' className='w-full'>
+                      <SelectValue placeholder='Seleziona colore' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {variants.map((v) => (
+                          <SelectItem key={v.id} value={v.id}>
+                            <span className='inline-flex items-center gap-2'>
+                              <span
+                                aria-hidden='true'
+                                className='size-3 rounded-full border border-border'
+                                style={{ background: v.hex }}
+                              />
+                              {v.name}
+                              <span className='text-muted-foreground text-xs'>
+                                ({v.stock})
+                              </span>
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {fieldErrors.variantId && (
+                    <FieldError>{fieldErrors.variantId.join(' · ')}</FieldError>
+                  )}
+                </Field>
+              )}
+
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 <Field>
                   <FieldLabel htmlFor='restock-date'>Data *</FieldLabel>

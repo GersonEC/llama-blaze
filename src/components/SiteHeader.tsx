@@ -1,5 +1,7 @@
+import { ShoppingCartIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { CartBadge } from '@/components/shop/CartBadge';
 
 const displayFont = 'font-[family-name:var(--font-fraunces)]';
 
@@ -29,18 +31,20 @@ export default function SiteHeader() {
           </span>
         </Link>
 
-        <div className='flex items-center gap-6'>
+        <div className='flex items-center gap-10'>
           <Link
             href='/shop'
-            className='text-[12px] font-semibold uppercase tracking-[0.18em] transition-colors hover:text-accent'
+            className='text-[14px] font-semibold uppercase tracking-[0.18em] transition-colors hover:text-accent'
           >
             Shop
           </Link>
           <Link
             href='/cart'
-            className='text-[12px] font-semibold uppercase tracking-[0.18em] transition-colors hover:text-accent'
+            aria-label='Vai al carrello'
+            className='relative text-[12px] font-semibold uppercase tracking-[0.18em] transition-colors hover:text-accent'
           >
-            Cart
+            <ShoppingCartIcon className='h-5 w-5' />
+            <CartBadge />
           </Link>
         </div>
       </div>

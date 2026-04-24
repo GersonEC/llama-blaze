@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useRef, useState, useTransition, type ReactNode } from 'react';
-import { Loader2Icon } from 'lucide-react';
+import { Loader2Icon, PlusIcon, Trash2Icon } from 'lucide-react';
 import { toast } from 'sonner';
 import { publicEnv } from '@/lib/env';
 import {
@@ -12,6 +12,7 @@ import {
   SUPPORTED_CURRENCIES,
   type ProductCategory,
   type ProductStatus,
+  type ProductVariantDraft,
 } from '@/lib/domain';
 import {
   createProductAction,
@@ -64,6 +65,7 @@ export interface ProductFormInitial {
   discountPercentage: number | null;
   acquisitionCostCents: number | null;
   shippingCostCents: number | null;
+  variants: ProductVariantDraft[];
 }
 
 interface ProductFormProps {
@@ -90,6 +92,7 @@ const BLANK: ProductFormInitial = {
   discountPercentage: null,
   acquisitionCostCents: null,
   shippingCostCents: null,
+  variants: [],
 };
 
 const UNCATEGORISED = '__uncategorised__';
@@ -228,19 +231,69 @@ export function ProductForm({
       return;
     }
 
+    const hasVariants = state.variants.length > 0;
+
+    const variantsValidationErrors: Record<string, string[]> = {};
+    const seenNames = new Set<string>();
+    state.variants.forEach((v, i) => {
+      const trimmedName = v.name.trim();
+      if (!trimmedName) {
+        (variantsValidationErrors[`variants.${i}.name`] ??= []).push(
+          'Nome obbligatorio',
+        );
+      } else if (seenNames.has(trimmedName.toLowerCase())) {
+        (variantsValidationErrors[`variants.${i}.name`] ??= []).push(
+          'Nome duplicato',
+        );
+      }
+      seenNames.add(trimmedName.toLowerCase());
+
+      if (!v.hex.trim()) {
+        (variantsValidationErrors[`variants.${i}.hex`] ??= []).push(
+          'Colore obbligatorio',
+        );
+      }
+      if (!Number.isInteger(v.stock) || v.stock < 0) {
+        (variantsValidationErrors[`variants.${i}.stock`] ??= []).push(
+          'Scorte non valide',
+        );
+      }
+    });
+    if (Object.keys(variantsValidationErrors).length > 0) {
+      setFieldErrors(variantsValidationErrors);
+      return;
+    }
+
+    // When variants exist, the DB trigger keeps `products.stock` = sum(stock).
+    // We still send a value; the server recomputes.
+    const effectiveStock = hasVariants
+      ? state.variants.reduce((sum, v) => sum + Math.max(0, v.stock), 0)
+      : state.stock;
+
+    const normalisedVariants: ProductVariantDraft[] = state.variants.map(
+      (v, i) => ({
+        id: v.id ?? null,
+        name: v.name.trim(),
+        hex: v.hex.trim(),
+        stock: Math.max(0, Math.floor(v.stock)),
+        position: i,
+      }),
+    );
+
     const payload = {
       slug: state.slug.trim(),
       name: state.name.trim(),
       description: state.description.trim(),
       priceCents,
       currency: state.currency,
-      stock: state.stock,
+      stock: effectiveStock,
       images: state.imagePaths,
       status: state.status,
       category: state.category,
       discountPercentage,
       acquisitionCostCents: acquisitionParsed,
       shippingCostCents: shippingParsed,
+      variants: normalisedVariants,
     };
 
     startTransition(async () => {
@@ -395,19 +448,33 @@ export function ProductForm({
                 </FieldLabel>
                 <Input
                   id='product-stock'
-                  value={String(state.stock)}
-                  onChange={(e) =>
+                  value={String(
+                    state.variants.length > 0
+                      ? state.variants.reduce(
+                          (sum, v) => sum + Math.max(0, v.stock),
+                          0,
+                        )
+                      : state.stock,
+                  )}
+                  onChange={(e) => {
+                    if (state.variants.length > 0) return;
                     setField(
                       'stock',
                       Math.max(0, Math.floor(Number(e.target.value) || 0)),
-                    )
-                  }
+                    );
+                  }}
                   inputMode='numeric'
-                  required
+                  required={state.variants.length === 0}
+                  readOnly={state.variants.length > 0}
                   aria-invalid={fieldErrors.stock ? true : undefined}
                 />
                 {fieldErrors.stock ? (
                   <FieldError>{fieldErrors.stock.join(' · ')}</FieldError>
+                ) : state.variants.length > 0 ? (
+                  <FieldDescription>
+                    Somma delle scorte per colore. Modifica i valori nella
+                    sezione Colori.
+                  </FieldDescription>
                 ) : mode === 'edit' ? (
                   <FieldDescription>
                     Gestito dai reintegri. Modifica manualmente solo per
@@ -545,6 +612,24 @@ export function ProductForm({
           </CardContent>
         </Card>
 
+        {/* Colori */}
+        <Card>
+          <CardHeader>
+            <SectionCardTitle
+              title='Colori'
+              hint='Ogni colore ha le sue scorte'
+            />
+          </CardHeader>
+          <CardContent>
+            <VariantsEditor
+              variants={state.variants}
+              onChange={(next) => setField('variants', next)}
+              disabled={isPending}
+              fieldErrors={fieldErrors}
+            />
+          </CardContent>
+        </Card>
+
         {/* Visibilità */}
         <Card>
           <CardHeader>
@@ -621,5 +706,196 @@ function RequiredMark() {
     <span aria-hidden className='font-medium text-destructive'>
       *
     </span>
+  );
+}
+
+interface VariantsEditorProps {
+  variants: ProductVariantDraft[];
+  onChange: (next: ProductVariantDraft[]) => void;
+  disabled: boolean;
+  fieldErrors: Record<string, string[]>;
+}
+
+/**
+ * Editable list of color variants. Each row is self-contained: name input,
+ * hex string + a native `<input type='color'>` swatch, stock input, remove
+ * button. Drag-and-drop is intentionally out of scope for v1 — positions are
+ * derived from the visual order at submit time.
+ */
+function VariantsEditor({
+  variants,
+  onChange,
+  disabled,
+  fieldErrors,
+}: VariantsEditorProps) {
+  function update(index: number, patch: Partial<ProductVariantDraft>) {
+    onChange(
+      variants.map((v, i) => (i === index ? { ...v, ...patch } : v)),
+    );
+  }
+
+  function addRow() {
+    onChange([
+      ...variants,
+      {
+        id: null,
+        name: '',
+        hex: '#000000',
+        stock: 0,
+        position: variants.length,
+      },
+    ]);
+  }
+
+  function removeRow(index: number) {
+    onChange(variants.filter((_, i) => i !== index));
+  }
+
+  if (variants.length === 0) {
+    return (
+      <div className='flex flex-col items-start gap-3 rounded-sm border border-dashed border-border bg-muted/50 p-4'>
+        <p className='text-sm text-muted-foreground'>
+          Nessun colore. Aggiungi varianti per gestire scorte separate per
+          ogni tonalità.
+        </p>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={addRow}
+          disabled={disabled}
+        >
+          <PlusIcon data-icon='inline-start' />
+          Aggiungi colore
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className='flex flex-col gap-3'>
+      {variants.map((v, i) => {
+        const nameError = fieldErrors[`variants.${i}.name`];
+        const hexError = fieldErrors[`variants.${i}.hex`];
+        const stockError = fieldErrors[`variants.${i}.stock`];
+        const hexIsCssColor =
+          /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v.hex.trim()) ||
+          /^(hsl|rgb|oklch|oklab|color)\(/i.test(v.hex.trim());
+        const colorInputValue = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(
+          v.hex.trim(),
+        )
+          ? v.hex.trim()
+          : '#000000';
+        return (
+          <div
+            key={v.id ?? `new-${i}`}
+            className='grid grid-cols-[1fr_auto] gap-3 rounded-sm border border-border p-3 sm:grid-cols-[1fr_140px_100px_auto]'
+          >
+            <Field data-invalid={nameError ? true : undefined}>
+              <FieldLabel
+                htmlFor={`variant-name-${i}`}
+                className='text-[11px] font-semibold uppercase tracking-wider'
+              >
+                Nome
+              </FieldLabel>
+              <Input
+                id={`variant-name-${i}`}
+                value={v.name}
+                onChange={(e) => update(i, { name: e.target.value })}
+                placeholder='Es. Nero'
+                aria-invalid={nameError ? true : undefined}
+                disabled={disabled}
+              />
+              {nameError && <FieldError>{nameError.join(' · ')}</FieldError>}
+            </Field>
+
+            <Field data-invalid={hexError ? true : undefined}>
+              <FieldLabel
+                htmlFor={`variant-hex-${i}`}
+                className='text-[11px] font-semibold uppercase tracking-wider'
+              >
+                Colore
+              </FieldLabel>
+              <div className='flex items-center gap-2'>
+                <input
+                  type='color'
+                  aria-label='Scegli colore'
+                  value={colorInputValue}
+                  onChange={(e) => update(i, { hex: e.target.value })}
+                  disabled={disabled}
+                  className='size-9 shrink-0 cursor-pointer rounded-sm border border-border bg-transparent p-0'
+                />
+                <Input
+                  id={`variant-hex-${i}`}
+                  value={v.hex}
+                  onChange={(e) => update(i, { hex: e.target.value })}
+                  placeholder='#000000'
+                  aria-invalid={hexError ? true : undefined}
+                  disabled={disabled}
+                  className='flex-1'
+                />
+              </div>
+              {hexError ? (
+                <FieldError>{hexError.join(' · ')}</FieldError>
+              ) : !hexIsCssColor && v.hex.trim() ? (
+                <FieldDescription>
+                  Formati validi: #rrggbb, hsl(), rgb(), oklch().
+                </FieldDescription>
+              ) : null}
+            </Field>
+
+            <Field data-invalid={stockError ? true : undefined}>
+              <FieldLabel
+                htmlFor={`variant-stock-${i}`}
+                className='text-[11px] font-semibold uppercase tracking-wider'
+              >
+                Scorte
+              </FieldLabel>
+              <Input
+                id={`variant-stock-${i}`}
+                value={String(v.stock)}
+                inputMode='numeric'
+                onChange={(e) =>
+                  update(i, {
+                    stock: Math.max(0, Math.floor(Number(e.target.value) || 0)),
+                  })
+                }
+                aria-invalid={stockError ? true : undefined}
+                disabled={disabled}
+              />
+              {stockError && (
+                <FieldError>{stockError.join(' · ')}</FieldError>
+              )}
+            </Field>
+
+            <div className='flex items-end justify-end pb-1 sm:pb-0'>
+              <Button
+                type='button'
+                variant='ghost'
+                size='icon-sm'
+                onClick={() => removeRow(i)}
+                disabled={disabled}
+                aria-label={`Rimuovi ${v.name || 'colore'}`}
+              >
+                <Trash2Icon />
+              </Button>
+            </div>
+          </div>
+        );
+      })}
+
+      <div>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={addRow}
+          disabled={disabled}
+        >
+          <PlusIcon data-icon='inline-start' />
+          Aggiungi colore
+        </Button>
+      </div>
+    </div>
   );
 }

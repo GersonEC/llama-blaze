@@ -4,17 +4,50 @@ import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/shallow';
-import { cents, type CartItem, type CartSummary, type Currency, type Product } from '@/lib/domain';
+import {
+  cents,
+  type CartItem,
+  type CartSummary,
+  type Currency,
+  type Product,
+  type ProductVariant,
+  type ProductVariantId,
+} from '@/lib/domain';
+
+interface AddItemOptions {
+  readonly variant?: ProductVariant | null;
+  readonly quantity?: number;
+}
 
 interface CartState {
   items: CartItem[];
-  addItem: (product: Product, quantity?: number) => void;
-  setQuantity: (productId: string, quantity: number) => void;
-  removeItem: (productId: string) => void;
+  addItem: (product: Product, opts?: AddItemOptions) => void;
+  setQuantity: (
+    productId: string,
+    variantId: ProductVariantId | string | null,
+    quantity: number,
+  ) => void;
+  removeItem: (
+    productId: string,
+    variantId: ProductVariantId | string | null,
+  ) => void;
   clear: () => void;
 }
 
-function productToCartItem(product: Product, quantity: number): CartItem {
+function sameLine(
+  item: CartItem,
+  productId: string,
+  variantId: string | null,
+): boolean {
+  return item.productId === productId && (item.variantId ?? null) === variantId;
+}
+
+function productToCartItem(
+  product: Product,
+  variant: ProductVariant | null,
+  quantity: number,
+): CartItem {
+  const effectiveStock = variant?.stock ?? product.stock;
   return {
     productId: product.id,
     slug: product.slug,
@@ -23,8 +56,11 @@ function productToCartItem(product: Product, quantity: number): CartItem {
     currency: product.price.currency,
     image: product.images[0] ?? null,
     quantity,
-    maxQuantity: product.stock,
+    maxQuantity: effectiveStock,
     category: product.category,
+    variantId: variant?.id ?? null,
+    variantName: variant?.name ?? null,
+    variantHex: variant?.hex ?? null,
   };
 }
 
@@ -32,42 +68,96 @@ export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       items: [],
-      addItem: (product, quantity = 1) =>
+      addItem: (product, opts) =>
         set((state) => {
-          const max = product.stock;
-          if (max <= 0) return state;
-          const existing = state.items.find((i) => i.productId === product.id);
+          const variant = opts?.variant ?? null;
+          const quantity = opts?.quantity ?? 1;
+          const effectiveStock = variant?.stock ?? product.stock;
+          if (effectiveStock <= 0) return state;
+          const variantId = variant?.id ?? null;
+          const existing = state.items.find((i) =>
+            sameLine(i, product.id, variantId),
+          );
           if (existing) {
-            const nextQty = Math.min(existing.quantity + quantity, max);
+            const nextQty = Math.min(
+              existing.quantity + quantity,
+              effectiveStock,
+            );
             return {
               items: state.items.map((i) =>
-                i.productId === product.id
-                  ? { ...i, quantity: nextQty, maxQuantity: max }
+                sameLine(i, product.id, variantId)
+                  ? { ...i, quantity: nextQty, maxQuantity: effectiveStock }
                   : i,
               ),
             };
           }
           return {
-            items: [...state.items, productToCartItem(product, Math.min(quantity, max))],
+            items: [
+              ...state.items,
+              productToCartItem(
+                product,
+                variant,
+                Math.min(quantity, effectiveStock),
+              ),
+            ],
           };
         }),
-      setQuantity: (productId, quantity) =>
-        set((state) => ({
-          items: state.items
-            .map((i) =>
-              i.productId === productId
-                ? { ...i, quantity: Math.max(0, Math.min(quantity, i.maxQuantity)) }
-                : i,
-            )
-            .filter((i) => i.quantity > 0),
-        })),
-      removeItem: (productId) =>
-        set((state) => ({ items: state.items.filter((i) => i.productId !== productId) })),
+      setQuantity: (productId, variantId, quantity) =>
+        set((state) => {
+          const normalisedVariantId = (variantId ?? null) as string | null;
+          return {
+            items: state.items
+              .map((i) =>
+                sameLine(i, productId, normalisedVariantId)
+                  ? {
+                      ...i,
+                      quantity: Math.max(
+                        0,
+                        Math.min(quantity, i.maxQuantity),
+                      ),
+                    }
+                  : i,
+              )
+              .filter((i) => i.quantity > 0),
+          };
+        }),
+      removeItem: (productId, variantId) =>
+        set((state) => {
+          const normalisedVariantId = (variantId ?? null) as string | null;
+          return {
+            items: state.items.filter(
+              (i) => !sameLine(i, productId, normalisedVariantId),
+            ),
+          };
+        }),
       clear: () => set({ items: [] }),
     }),
     {
       name: 'llamablaze.cart',
-      version: 1,
+      version: 2,
+      /**
+       * v1 → v2 migration: items persisted before color variants existed
+       * carried no `variantId`. Deserialise them as bare product lines
+       * (variantId/name/hex all null) so existing carts keep working.
+       */
+      migrate: (persistedState, version) => {
+        if (!persistedState || typeof persistedState !== 'object') {
+          return persistedState as CartState;
+        }
+        const state = persistedState as { items?: Array<Record<string, unknown>> };
+        if (version < 2) {
+          return {
+            ...state,
+            items: (state.items ?? []).map((i) => ({
+              ...i,
+              variantId: null,
+              variantName: null,
+              variantHex: null,
+            })),
+          } as unknown as CartState;
+        }
+        return state as unknown as CartState;
+      },
     },
   ),
 );

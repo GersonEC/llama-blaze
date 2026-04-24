@@ -1,7 +1,7 @@
 'use server';
 
 import { CheckoutInputSchema } from '@/lib/domain/schemas';
-import { asProductId } from '@/lib/domain';
+import { asProductId, asProductVariantId } from '@/lib/domain';
 import { getSupabaseServerClient, getSupabaseServiceRoleClient } from '@/lib/supabase/server';
 import { createReservation, findReservationById } from '@/lib/repositories/reservations';
 import {
@@ -43,6 +43,7 @@ export async function submitReservationAction(
       },
       items: input.items.map((i) => ({
         productId: asProductId(i.productId),
+        variantId: i.variantId ? asProductVariantId(i.variantId) : null,
         quantity: i.quantity,
       })),
     });
@@ -72,6 +73,12 @@ export async function submitReservationAction(
 function humaniseRpcError(message: string): string {
   if (/insufficient stock/i.test(message)) {
     return "Sorry — one of your items just went out of stock. Please review your cart.";
+  }
+  if (/variant_id is required/i.test(message) || /has no variants/i.test(message)) {
+    return 'The color selection for one of your items is invalid. Please review your cart.';
+  }
+  if (/variant .* not found/i.test(message)) {
+    return 'One of the selected colors is no longer available. Please review your cart.';
   }
   if (/not active/i.test(message)) {
     return "One of your items is no longer available.";

@@ -46,6 +46,11 @@ export function RelatedProducts({ items }: RelatedProductsProps) {
             fullPrice={product.price}
             discountPercentage={product.discountPercentage}
             stock={product.stock}
+            swatches={product.variants.map((v) => ({
+              id: v.id,
+              name: v.name,
+              hex: v.hex,
+            }))}
           />
         ))}
       </div>

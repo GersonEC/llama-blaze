@@ -6,6 +6,9 @@ export type ProductId = string & { readonly __brand: 'ProductId' };
 /** URL-safe, human-readable identifier used in `/shop/[slug]`. */
 export type ProductSlug = string & { readonly __brand: 'ProductSlug' };
 
+/** Opaque id for a product_variants row (UUID). */
+export type ProductVariantId = string & { readonly __brand: 'ProductVariantId' };
+
 export function asProductId(value: string): ProductId {
   if (!value) throw new RangeError('Empty product id');
   return value as ProductId;
@@ -14,6 +17,11 @@ export function asProductId(value: string): ProductId {
 export function asProductSlug(value: string): ProductSlug {
   if (!value) throw new RangeError('Empty product slug');
   return value as ProductSlug;
+}
+
+export function asProductVariantId(value: string): ProductVariantId {
+  if (!value) throw new RangeError('Empty product variant id');
+  return value as ProductVariantId;
 }
 
 /**
@@ -68,6 +76,35 @@ export function isProductStatus(value: unknown): value is ProductStatus {
 }
 
 /**
+ * A single color option for a product. Per-variant stock is authoritative
+ * when a product has any variants — the product's top-level `stock` column
+ * is then maintained as the sum of its variants' stocks by a DB trigger.
+ */
+export interface ProductVariant {
+  readonly id: ProductVariantId;
+  readonly productId: ProductId;
+  readonly name: string;
+  /** Any valid CSS color — used directly for the swatch `background` style. */
+  readonly hex: string;
+  readonly stock: number;
+  /** Order the swatch appears in the picker; lower values render first. */
+  readonly position: number;
+}
+
+/**
+ * Shape used by admin forms to create/update a product's color list.
+ * `id` is populated for existing variants (drives update vs insert); blank
+ * for new rows.
+ */
+export interface ProductVariantDraft {
+  readonly id: string | null;
+  readonly name: string;
+  readonly hex: string;
+  readonly stock: number;
+  readonly position: number;
+}
+
+/**
  * Domain representation of a product. This is what flows through the UI and
  * server actions; DB row shapes never leak out of the data-access layer.
  */
@@ -101,6 +138,12 @@ export interface Product {
   readonly acquisitionCost: Money | null;
   /** Latest per-unit shipping cost paid to bring stock in. `null` means none recorded. */
   readonly shippingCost: Money | null;
+  /**
+   * Color variants attached to the product. Empty when the product has no
+   * color options (legacy behaviour — stock is then managed directly on the
+   * product). Sorted by `position` ascending.
+   */
+  readonly variants: readonly ProductVariant[];
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -122,6 +165,12 @@ export interface ProductDraft {
   readonly acquisitionCostCents: number | null;
   /** Latest per-unit shipping cost in cents, or `null` to clear. */
   readonly shippingCostCents: number | null;
+  /**
+   * Color variants to persist. When non-empty, the top-level `stock` field
+   * is ignored server-side — per-variant stock becomes authoritative and
+   * the product's stock is maintained by trigger.
+   */
+  readonly variants: readonly ProductVariantDraft[];
 }
 
 /**

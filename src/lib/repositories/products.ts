@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database, Inserts, Updates } from '@/lib/supabase/database.types';
+import type { Database, Inserts, Tables, Updates } from '@/lib/supabase/database.types';
 import { toProduct } from '@/lib/supabase/mappers';
 import {
   isProductCategory,
@@ -8,11 +8,22 @@ import {
   type ProductDraft,
   type ProductId,
   type ProductSlug,
+  type ProductVariantDraft,
 } from '@/lib/domain';
 
 const PRODUCT_IMAGES_BUCKET = 'product-images';
 
 type Client = SupabaseClient<Database>;
+
+/**
+ * Shape returned by `.select('*, product_variants(*)')`. Supabase typegen
+ * surfaces embedded relations as an array of the related row type.
+ */
+type ProductRowWithVariants = Tables<'products'> & {
+  product_variants: Tables<'product_variants'>[] | null;
+};
+
+const PRODUCT_SELECT_WITH_VARIANTS = '*, product_variants(*)';
 
 /** Map each storage path to a public URL. Paths unchanged if already absolute. */
 function resolveImageUrls(client: Client, paths: readonly string[]): string[] {
@@ -23,17 +34,21 @@ function resolveImageUrls(client: Client, paths: readonly string[]): string[] {
   });
 }
 
+function rowToProduct(client: Client, row: ProductRowWithVariants): Product {
+  return toProduct(row, resolveImageUrls(client, row.images), row.product_variants ?? []);
+}
+
 /** Active products, newest first, visible to the public. */
 export async function listActiveProducts(client: Client): Promise<Product[]> {
   const { data, error } = await client
     .from('products')
-    .select('*')
+    .select(PRODUCT_SELECT_WITH_VARIANTS)
     .eq('status', 'active')
     .gt('stock', 0)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return (data ?? []).map((row) => toProduct(row, resolveImageUrls(client, row.images)));
+  return (data ?? []).map((row) => rowToProduct(client, row as ProductRowWithVariants));
 }
 
 /** Find one by slug. Returns null if hidden, inactive, or missing. */
@@ -43,13 +58,13 @@ export async function findProductBySlug(
 ): Promise<Product | null> {
   const { data, error } = await client
     .from('products')
-    .select('*')
+    .select(PRODUCT_SELECT_WITH_VARIANTS)
     .eq('slug', slug)
     .maybeSingle();
 
   if (error) throw error;
   if (!data) return null;
-  return toProduct(data, resolveImageUrls(client, data.images));
+  return rowToProduct(client, data as ProductRowWithVariants);
 }
 
 /**
@@ -72,7 +87,7 @@ export async function listRelatedProducts(
   if (category) {
     const { data, error } = await client
       .from('products')
-      .select('*')
+      .select(PRODUCT_SELECT_WITH_VARIANTS)
       .eq('status', 'active')
       .gt('stock', 0)
       .eq('category', category)
@@ -82,32 +97,32 @@ export async function listRelatedProducts(
     if (error) throw error;
     if ((data?.length ?? 0) >= minPerCategory) {
       return (data ?? []).map((row) =>
-        toProduct(row, resolveImageUrls(client, row.images)),
+        rowToProduct(client, row as ProductRowWithVariants),
       );
     }
   }
 
   const { data, error } = await client
     .from('products')
-    .select('*')
+    .select(PRODUCT_SELECT_WITH_VARIANTS)
     .eq('status', 'active')
     .gt('stock', 0)
     .neq('id', options.excludeId)
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return (data ?? []).map((row) => toProduct(row, resolveImageUrls(client, row.images)));
+  return (data ?? []).map((row) => rowToProduct(client, row as ProductRowWithVariants));
 }
 
 /** Admin: list everything including inactive + zero-stock. */
 export async function listAllProducts(client: Client): Promise<Product[]> {
   const { data, error } = await client
     .from('products')
-    .select('*')
+    .select(PRODUCT_SELECT_WITH_VARIANTS)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return (data ?? []).map((row) => toProduct(row, resolveImageUrls(client, row.images)));
+  return (data ?? []).map((row) => rowToProduct(client, row as ProductRowWithVariants));
 }
 
 export async function findProductById(
@@ -116,13 +131,13 @@ export async function findProductById(
 ): Promise<Product | null> {
   const { data, error } = await client
     .from('products')
-    .select('*')
+    .select(PRODUCT_SELECT_WITH_VARIANTS)
     .eq('id', id)
     .maybeSingle();
 
   if (error) throw error;
   if (!data) return null;
-  return toProduct(data, resolveImageUrls(client, data.images));
+  return rowToProduct(client, data as ProductRowWithVariants);
 }
 
 /**
@@ -137,11 +152,11 @@ export async function findProductsByIds(
   if (ids.length === 0) return [];
   const { data, error } = await client
     .from('products')
-    .select('*')
+    .select(PRODUCT_SELECT_WITH_VARIANTS)
     .in('id', ids as string[]);
 
   if (error) throw error;
-  return (data ?? []).map((row) => toProduct(row, resolveImageUrls(client, row.images)));
+  return (data ?? []).map((row) => rowToProduct(client, row as ProductRowWithVariants));
 }
 
 export async function createProduct(client: Client, draft: ProductDraft): Promise<Product> {
@@ -166,7 +181,13 @@ export async function createProduct(client: Client, draft: ProductDraft): Promis
     .single();
 
   if (error) throw error;
-  return toProduct(data, resolveImageUrls(client, data.images));
+
+  await upsertProductVariants(client, data.id, draft.variants);
+  const fresh = await findProductById(client, data.id);
+  if (!fresh) {
+    throw new Error('Product disappeared immediately after creation');
+  }
+  return fresh;
 }
 
 export async function updateProduct(
@@ -188,20 +209,91 @@ export async function updateProduct(
     acquisition_cost_cents: draft.acquisitionCostCents,
     shipping_cost_cents: draft.shippingCostCents,
   };
-  const { data, error } = await client
+  const { error } = await client
     .from('products')
     .update(payload)
     .eq('id', id)
-    .select('*')
+    .select('id')
     .single();
 
   if (error) throw error;
-  return toProduct(data, resolveImageUrls(client, data.images));
+
+  await upsertProductVariants(client, id, draft.variants);
+  const fresh = await findProductById(client, id);
+  if (!fresh) {
+    throw new Error('Product disappeared immediately after update');
+  }
+  return fresh;
 }
 
 export async function deleteProduct(client: Client, id: ProductId | string): Promise<void> {
   const { error } = await client.from('products').delete().eq('id', id);
   if (error) throw error;
+}
+
+/**
+ * Reconcile a product's color variants to match `drafts` exactly:
+ *  - rows with a matching id get updated (name / hex / stock / position)
+ *  - rows without an id get inserted
+ *  - existing rows whose id is absent from `drafts` get deleted
+ *
+ * Stock changes on the variant side cascade to `products.stock` via a DB
+ * trigger; callers don't need to touch the products row.
+ */
+export async function upsertProductVariants(
+  client: Client,
+  productId: ProductId | string,
+  drafts: readonly ProductVariantDraft[],
+): Promise<void> {
+  const { data: existingRows, error: existingErr } = await client
+    .from('product_variants')
+    .select('id')
+    .eq('product_id', productId);
+  if (existingErr) throw existingErr;
+  const existingIds = new Set((existingRows ?? []).map((r) => r.id));
+
+  const keepIds = new Set<string>();
+  const toInsert: Inserts<'product_variants'>[] = [];
+  const toUpdate: Array<{ id: string; patch: Updates<'product_variants'> }> = [];
+
+  drafts.forEach((draft, index) => {
+    const payload = {
+      product_id: productId as string,
+      name: draft.name.trim(),
+      hex: draft.hex.trim(),
+      stock: Math.max(0, Math.floor(draft.stock)),
+      position: draft.position ?? index,
+    };
+    if (draft.id && existingIds.has(draft.id)) {
+      keepIds.add(draft.id);
+      toUpdate.push({ id: draft.id, patch: payload });
+    } else {
+      toInsert.push(payload);
+    }
+  });
+
+  const toDeleteIds = [...existingIds].filter((id) => !keepIds.has(id));
+
+  if (toDeleteIds.length > 0) {
+    const { error } = await client
+      .from('product_variants')
+      .delete()
+      .in('id', toDeleteIds);
+    if (error) throw error;
+  }
+
+  for (const { id, patch } of toUpdate) {
+    const { error } = await client
+      .from('product_variants')
+      .update(patch)
+      .eq('id', id);
+    if (error) throw error;
+  }
+
+  if (toInsert.length > 0) {
+    const { error } = await client.from('product_variants').insert(toInsert);
+    if (error) throw error;
+  }
 }
 
 /** Upload an image file to the product-images bucket; returns the storage path. */

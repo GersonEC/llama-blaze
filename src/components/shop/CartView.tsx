@@ -90,13 +90,15 @@ function CartHead({ itemCount }: { itemCount: number }) {
       </nav>
 
       <h1 className='font-(family-name:--font-fraunces) text-[clamp(3.5rem,7vw,6rem)] font-light leading-none tracking-[-0.02em]'>
-        Il tuo{' '}
-        <em className='font-normal italic text-accent'>carrello</em>.
+        Il tuo <em className='font-normal italic text-accent'>carrello</em>.
       </h1>
 
       <p className='max-w-[52ch] text-[15px] leading-[1.6] text-muted-foreground'>
         {empty ? (
-          <>Nessun pezzo scelto per ora. Vai allo shop e trova qualcosa che vale la pena.</>
+          <>
+            Nessun pezzo scelto per ora. Vai allo shop e trova qualcosa che vale
+            la pena.
+          </>
         ) : (
           <>
             Hai{' '}
@@ -132,7 +134,10 @@ function ItemsColumn({ items }: { items: readonly CartItem[] }) {
 
       <ul className='flex flex-col'>
         {items.map((item) => (
-          <CartLine key={item.productId} item={item} />
+          <CartLine
+            key={`${item.productId}:${item.variantId ?? ''}`}
+            item={item}
+          />
         ))}
       </ul>
 
@@ -187,27 +192,44 @@ function CartLine({ item }: { item: CartItem }) {
           </Link>
         </h3>
 
+        {item.variantName && (
+          <span className='inline-flex items-center gap-2 text-[12px] text-muted-foreground'>
+            <span
+              aria-hidden='true'
+              className='size-[12px] rounded-full border border-border'
+              style={{ background: item.variantHex ?? 'transparent' }}
+            />
+            {item.variantName}
+          </span>
+        )}
+
         <div className='mt-3 inline-flex w-fit items-center rounded-full border border-border'>
-          <button
+          <Button
             type='button'
-            onClick={() => setQuantity(item.productId, item.quantity - 1)}
+            onClick={() =>
+              setQuantity(item.productId, item.variantId, item.quantity - 1)
+            }
             aria-label='Diminuisci quantità'
-            className='grid size-[34px] place-items-center rounded-full text-foreground transition-colors hover:bg-muted'
+            variant='ghost'
+            size='icon-sm'
           >
             <MinusIcon className='size-4' strokeWidth={1.7} />
-          </button>
+          </Button>
           <span className='min-w-[28px] text-center text-sm font-semibold tabular-nums'>
             {item.quantity}
           </span>
-          <button
+          <Button
             type='button'
-            onClick={() => setQuantity(item.productId, item.quantity + 1)}
+            onClick={() =>
+              setQuantity(item.productId, item.variantId, item.quantity + 1)
+            }
             disabled={item.quantity >= item.maxQuantity}
             aria-label='Aumenta quantità'
-            className='grid size-[34px] place-items-center rounded-full text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40'
+            variant='ghost'
+            size='icon-sm'
           >
             <PlusIcon className='size-4' strokeWidth={1.7} />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -224,7 +246,7 @@ function CartLine({ item }: { item: CartItem }) {
         </div>
         <button
           type='button'
-          onClick={() => removeItem(item.productId)}
+          onClick={() => removeItem(item.productId, item.variantId)}
           className='inline-flex items-center gap-1.5 text-[12px] text-muted-foreground transition-colors hover:text-accent sm:mt-auto'
         >
           <Trash2Icon className='size-[13px]' strokeWidth={1.6} />
@@ -254,10 +276,7 @@ function PromoRow() {
       onSubmit={handleSubmit}
       className='mt-7 flex items-center gap-2.5 rounded-sm bg-muted px-5 py-[18px]'
     >
-      <TagIcon
-        className='size-[18px] shrink-0 text-accent'
-        strokeWidth={1.7}
-      />
+      <TagIcon className='size-[18px] shrink-0 text-accent' strokeWidth={1.7} />
       <Input
         id='promo'
         name='promo'
@@ -328,9 +347,7 @@ function SummaryColumn({
           />
           <SumRow
             label='IVA inclusa'
-            value={
-              currency ? formatPriceCents(cents(vatCents), currency) : '—'
-            }
+            value={currency ? formatPriceCents(cents(vatCents), currency) : '—'}
           />
 
           <div className='mt-3.5 flex items-baseline justify-between border-t border-border pt-[22px]'>
@@ -378,14 +395,17 @@ function SummaryColumn({
           <b className='mb-0.5 block text-[13px] font-semibold text-foreground'>
             Nessun pagamento online.
           </b>
-          Confermerai l&apos;incontro via email e pagherai in contanti quando
-          ci vediamo.
+          Confermerai l&apos;incontro via email e pagherai in contanti quando ci
+          vediamo.
         </p>
       </div>
 
       <ul className='mt-[22px] flex flex-col gap-3'>
-        <BadgeRow icon={<PackageIcon className='size-[15px]' strokeWidth={1.6} />}>
-          Spedizione gratuita sopra <b className='font-semibold text-foreground'>€ 120</b>
+        <BadgeRow
+          icon={<PackageIcon className='size-[15px]' strokeWidth={1.6} />}
+        >
+          Spedizione gratuita sopra{' '}
+          <b className='font-semibold text-foreground'>€ 120</b>
         </BadgeRow>
         <BadgeRow
           icon={<RotateCcwIcon className='size-[15px]' strokeWidth={1.6} />}
@@ -396,8 +416,8 @@ function SummaryColumn({
         <BadgeRow
           icon={<WrenchIcon className='size-[15px]' strokeWidth={1.6} />}
         >
-          <b className='font-semibold text-foreground'>Riparazioni a vita</b>{' '}
-          — sempre gratis
+          <b className='font-semibold text-foreground'>Riparazioni a vita</b> —
+          sempre gratis
         </BadgeRow>
       </ul>
     </aside>

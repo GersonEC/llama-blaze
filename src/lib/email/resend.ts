@@ -14,25 +14,39 @@ function getClient(): Resend {
 
 function itemsList(reservation: Reservation): string {
   return reservation.items
-    .map(
-      (i) =>
-        `- ${i.quantity}× ${i.productName} @ ${formatMoney(i.unitPrice)} = ${formatMoney({
-          amount: cents(i.unitPrice.amount * i.quantity),
-          currency: i.unitPrice.currency,
-        })}`,
-    )
+    .map((i) => {
+      const variantSuffix = i.variantName ? ` — ${i.variantName}` : '';
+      return `- ${i.quantity}× ${i.productName}${variantSuffix} @ ${formatMoney(
+        i.unitPrice,
+      )} = ${formatMoney({
+        amount: cents(i.unitPrice.amount * i.quantity),
+        currency: i.unitPrice.currency,
+      })}`;
+    })
     .join('\n');
 }
 
 function itemsHtml(reservation: Reservation): string {
   const rows = reservation.items
-    .map(
-      (i) => `<tr>
-  <td style="padding:8px 12px;border-bottom:1px solid #eee;">${escapeHtml(i.productName)}</td>
+    .map((i) => {
+      const swatchHtml = i.variantName
+        ? `<div style="display:block;color:#666;font-size:12px;margin-top:2px;">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${escapeHtml(
+            i.variantHex ?? '#ccc',
+          )};border:1px solid #ddd;margin-right:6px;vertical-align:middle;"></span>${escapeHtml(
+            i.variantName,
+          )}
+        </div>`
+        : '';
+      return `<tr>
+  <td style="padding:8px 12px;border-bottom:1px solid #eee;">
+    ${escapeHtml(i.productName)}
+    ${swatchHtml}
+  </td>
   <td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center;">${i.quantity}</td>
   <td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;">${formatMoney(i.unitPrice)}</td>
-</tr>`,
-    )
+</tr>`;
+    })
     .join('');
   return `<table style="width:100%;border-collapse:collapse;">
   <thead>

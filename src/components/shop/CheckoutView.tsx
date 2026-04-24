@@ -169,6 +169,7 @@ function ContactForm({ items, hasMixedCurrencies }: ContactFormProps) {
         },
         items: items.map((i) => ({
           productId: i.productId,
+          variantId: i.variantId,
           quantity: i.quantity,
         })),
       });
@@ -426,7 +427,10 @@ function SummaryAside({
 
       <ul className='flex flex-col'>
         {items.map((item) => (
-          <SummaryItem key={item.productId} item={item} />
+          <SummaryItem
+            key={`${item.productId}:${item.variantId ?? ''}`}
+            item={item}
+          />
         ))}
       </ul>
 
@@ -525,6 +529,16 @@ function SummaryItem({ item }: { item: CartItem }) {
         <h3 className='truncate text-[13px] font-semibold leading-[1.3] tracking-[-0.005em]'>
           {item.name}
         </h3>
+        {item.variantName && (
+          <span className='mt-0.5 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground'>
+            <span
+              aria-hidden='true'
+              className='size-[10px] rounded-full border border-border'
+              style={{ background: item.variantHex ?? 'transparent' }}
+            />
+            {item.variantName}
+          </span>
+        )}
       </div>
 
       <span className='whitespace-nowrap text-[13px] font-semibold tabular-nums'>

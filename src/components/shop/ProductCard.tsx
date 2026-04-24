@@ -24,6 +24,13 @@ export interface ProductCardProps {
   /** Forwards to next/image `priority` for above-the-fold cards. */
   priority?: boolean;
   className?: string;
+  /**
+   * Optional color options shown as a small row of dots under the name.
+   * Up to 4 swatches are rendered — the rest collapse to a "+N" chip. Pass
+   * `undefined` or an empty array to hide the row entirely (products with no
+   * color variants keep the original layout).
+   */
+  swatches?: ReadonlyArray<{ id: string; name: string; hex: string }>;
 }
 
 /**
@@ -47,6 +54,7 @@ export function ProductCard({
   isNew,
   priority,
   className,
+  swatches,
 }: ProductCardProps) {
   const isDiscounted = !!(discountPercentage && discountPercentage > 0);
   const finalAmount = finalPriceCents(fullPrice.amount, discountPercentage);
@@ -104,6 +112,9 @@ export function ProductCard({
         <h3 className='text-[15px] font-semibold tracking-[-0.005em] text-foreground'>
           {name}
         </h3>
+        {swatches && swatches.length > 0 && (
+          <SwatchRow swatches={swatches} />
+        )}
         <div className='mt-1.5 flex items-center justify-between'>
           <ProductCardPrice
             fullPrice={fullPrice}
@@ -142,6 +153,37 @@ function ProductCardPrice({
       <span className='text-accent'>{formatMoney(finalPrice)}</span>
       <span className='sr-only'>On sale, {discountPercentage}% off</span>
     </span>
+  );
+}
+
+function SwatchRow({
+  swatches,
+}: {
+  swatches: ReadonlyArray<{ id: string; name: string; hex: string }>;
+}) {
+  const MAX = 4;
+  const visible = swatches.slice(0, MAX);
+  const extra = swatches.length - visible.length;
+  return (
+    <div
+      className='mt-1 flex items-center gap-1'
+      aria-label={`${swatches.length} ${swatches.length === 1 ? 'colore' : 'colori'} disponibili`}
+    >
+      {visible.map((s) => (
+        <span
+          key={s.id}
+          aria-hidden='true'
+          title={s.name}
+          className='size-[12px] rounded-full border border-border'
+          style={{ background: s.hex }}
+        />
+      ))}
+      {extra > 0 && (
+        <span className='ml-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
+          +{extra}
+        </span>
+      )}
+    </div>
   );
 }
 

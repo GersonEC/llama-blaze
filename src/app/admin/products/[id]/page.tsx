@@ -125,6 +125,13 @@ export default async function EditProductPage({
           discountPercentage: product.discountPercentage,
           acquisitionCostCents: product.acquisitionCost?.amount ?? null,
           shippingCostCents: product.shippingCost?.amount ?? null,
+          variants: product.variants.map((v) => ({
+            id: v.id,
+            name: v.name,
+            hex: v.hex,
+            stock: v.stock,
+            position: v.position,
+          })),
         }}
         sidebar={
           <RestockCard
@@ -132,6 +139,12 @@ export default async function EditProductPage({
             currentStock={product.stock}
             defaultUnitCostCents={product.acquisitionCost?.amount ?? null}
             defaultShippingCostCents={product.shippingCost?.amount ?? null}
+            variants={product.variants.map((v) => ({
+              id: v.id,
+              name: v.name,
+              hex: v.hex,
+              stock: v.stock,
+            }))}
           />
         }
       />

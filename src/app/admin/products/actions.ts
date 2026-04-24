@@ -5,8 +5,16 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/auth';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
-import { ProductFormSchema, ProductPurchaseSchema } from '@/lib/domain/schemas';
-import type { ProductCategory, ProductStatus } from '@/lib/domain';
+import {
+  ProductFormSchema,
+  ProductPurchaseSchema,
+  ProductVariantPurchaseSchema,
+} from '@/lib/domain/schemas';
+import type {
+  ProductCategory,
+  ProductStatus,
+  ProductVariantDraft,
+} from '@/lib/domain';
 import {
   createProduct,
   deleteProduct,
@@ -14,7 +22,10 @@ import {
   updateProduct,
   uploadProductImage,
 } from '@/lib/repositories/products';
-import { recordProductPurchase } from '@/lib/repositories/purchases';
+import {
+  recordProductPurchase,
+  recordVariantPurchase,
+} from '@/lib/repositories/purchases';
 
 export interface ProductActionResult {
   readonly ok: boolean;
@@ -36,9 +47,20 @@ interface ProductFormPayload {
   discountPercentage: number | null;
   acquisitionCostCents: number | null;
   shippingCostCents: number | null;
+  variants: ProductVariantDraft[];
 }
 
 export interface RestockPayload {
+  productId: string;
+  purchasedAt: string | null;
+  quantity: number;
+  unitCostCents: number;
+  shippingCostCents: number;
+  notes: string;
+}
+
+export interface VariantRestockPayload {
+  variantId: string;
   productId: string;
   purchasedAt: string | null;
   quantity: number;
@@ -181,6 +203,45 @@ export async function restockProductAction(
     revalidatePath(`/admin/products/${parsed.data.productId}`);
     revalidatePath('/shop');
     return { ok: true, productId: parsed.data.productId };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Errore sconosciuto';
+    return { ok: false, error: message };
+  }
+}
+
+/**
+ * Variant-scoped restock. The RPC bumps the variant's stock (cascading to
+ * `products.stock` via a DB trigger) and refreshes the product-level cost
+ * columns. Called from the admin `RestockCard` when a product has variants.
+ */
+export async function recordVariantPurchaseAction(
+  input: VariantRestockPayload,
+): Promise<ProductActionResult> {
+  await requireAdmin();
+
+  const parsed = ProductVariantPurchaseSchema.safeParse({
+    variantId: input.variantId,
+    purchasedAt: input.purchasedAt,
+    quantity: input.quantity,
+    unitCostCents: input.unitCostCents,
+    shippingCostCents: input.shippingCostCents,
+    notes: input.notes,
+  });
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string[]> = {};
+    for (const issue of parsed.error.issues) {
+      (fieldErrors[issue.path.join('.')] ??= []).push(issue.message);
+    }
+    return { ok: false, error: 'Correggi i campi evidenziati.', fieldErrors };
+  }
+
+  try {
+    const supabase = await getSupabaseServerClient();
+    await recordVariantPurchase(supabase, parsed.data);
+    revalidatePath('/admin/products');
+    revalidatePath(`/admin/products/${input.productId}`);
+    revalidatePath('/shop');
+    return { ok: true, productId: input.productId };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Errore sconosciuto';
     return { ok: false, error: message };

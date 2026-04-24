@@ -78,6 +78,47 @@ export type Database = {
         };
         Relationships: [];
       };
+      product_variants: {
+        Row: {
+          id: string;
+          product_id: string;
+          name: string;
+          hex: string;
+          stock: number;
+          position: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          name: string;
+          hex: string;
+          stock?: number;
+          position?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          product_id?: string;
+          name?: string;
+          hex?: string;
+          stock?: number;
+          position?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'product_variants_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       product_purchases: {
         Row: {
           id: string;
@@ -166,8 +207,11 @@ export type Database = {
           id: string;
           reservation_id: string;
           product_id: string;
+          variant_id: string | null;
           product_name_snapshot: string;
           product_slug_snapshot: string;
+          variant_name_snapshot: string | null;
+          variant_hex_snapshot: string | null;
           unit_price_cents_snapshot: number;
           quantity: number;
           created_at: string;
@@ -176,8 +220,11 @@ export type Database = {
           id?: string;
           reservation_id: string;
           product_id: string;
+          variant_id?: string | null;
           product_name_snapshot: string;
           product_slug_snapshot: string;
+          variant_name_snapshot?: string | null;
+          variant_hex_snapshot?: string | null;
           unit_price_cents_snapshot: number;
           quantity: number;
           created_at?: string;
@@ -186,8 +233,11 @@ export type Database = {
           id?: string;
           reservation_id?: string;
           product_id?: string;
+          variant_id?: string | null;
           product_name_snapshot?: string;
           product_slug_snapshot?: string;
+          variant_name_snapshot?: string | null;
+          variant_hex_snapshot?: string | null;
           unit_price_cents_snapshot?: number;
           quantity?: number;
           created_at?: string;
@@ -205,6 +255,13 @@ export type Database = {
             columns: ['product_id'];
             isOneToOne: false;
             referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'reservation_items_variant_id_fkey';
+            columns: ['variant_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_variants';
             referencedColumns: ['id'];
           },
         ];
@@ -225,6 +282,17 @@ export type Database = {
       record_product_purchase: {
         Args: {
           p_product_id: string;
+          p_quantity: number;
+          p_unit_cost_cents: number;
+          p_shipping_cost_cents: number;
+          p_purchased_at?: string | null;
+          p_notes?: string | null;
+        };
+        Returns: string;
+      };
+      record_variant_purchase: {
+        Args: {
+          p_variant_id: string;
           p_quantity: number;
           p_unit_cost_cents: number;
           p_shipping_cost_cents: number;

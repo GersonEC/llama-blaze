@@ -3,6 +3,15 @@ import type { Database } from '@/lib/supabase/database.types';
 import { toProductPurchase } from '@/lib/supabase/mappers';
 import type { ProductId, ProductPurchase, ProductPurchaseDraft } from '@/lib/domain';
 
+interface VariantPurchaseDraft {
+  readonly variantId: string;
+  readonly purchasedAt: string | null;
+  readonly quantity: number;
+  readonly unitCostCents: number;
+  readonly shippingCostCents: number;
+  readonly notes: string;
+}
+
 type Client = SupabaseClient<Database>;
 
 /** Ledger rows for a single product, newest first. */
@@ -61,6 +70,38 @@ export async function recordProductPurchase(
 
   if (error) throw error;
   if (!purchaseId) throw new Error('record_product_purchase returned no id');
+
+  const { data: row, error: fetchError } = await client
+    .from('product_purchases')
+    .select('*')
+    .eq('id', purchaseId)
+    .single();
+
+  if (fetchError) throw fetchError;
+  return toProductPurchase(row);
+}
+
+/**
+ * Variant-scoped counterpart to `recordProductPurchase`. Delegates to the
+ * `record_variant_purchase` RPC which atomically appends the ledger row,
+ * bumps the variant's stock (cascading into `products.stock` via trigger),
+ * and refreshes the product's latest per-unit cost columns.
+ */
+export async function recordVariantPurchase(
+  client: Client,
+  draft: VariantPurchaseDraft,
+): Promise<ProductPurchase> {
+  const { data: purchaseId, error } = await client.rpc('record_variant_purchase', {
+    p_variant_id: draft.variantId,
+    p_quantity: draft.quantity,
+    p_unit_cost_cents: draft.unitCostCents,
+    p_shipping_cost_cents: draft.shippingCostCents,
+    p_purchased_at: draft.purchasedAt,
+    p_notes: draft.notes,
+  });
+
+  if (error) throw error;
+  if (!purchaseId) throw new Error('record_variant_purchase returned no id');
 
   const { data: row, error: fetchError } = await client
     .from('product_purchases')

@@ -1,37 +1,32 @@
 'use client';
 
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
-
-interface Swatch {
-  name: string;
-  /** Any valid CSS color — used directly for the `background` style. */
-  color: string;
-}
-
-const DEFAULT_SWATCHES: readonly Swatch[] = [
-  { name: 'Cuoio naturale', color: '#8a5a30' },
-  { name: 'Testa di moro', color: '#3a2515' },
-  { name: 'Nero', color: '#0B0B0B' },
-  { name: 'Rosso Blaze', color: 'hsl(352 85% 52%)' },
-];
+import type { ProductVariant } from '@/lib/domain';
+import { Button } from '../ui/button';
 
 export interface ColorSwatchesProps {
-  swatches?: readonly Swatch[];
+  variants: readonly ProductVariant[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
   className?: string;
 }
 
 /**
- * Decorative color picker. No variant data is persisted — selection is
- * local UI state only. Exposed as a client island so the PDP's info column
- * can stay a server component.
+ * Controlled, data-driven color picker for the PDP. Renders nothing when
+ * the product has no variants, so callers can mount it unconditionally.
+ * Out-of-stock variants stay selectable (so the UI can still show their
+ * name + availability) but render dimmed with a diagonal strike.
  */
 export function ColorSwatches({
-  swatches = DEFAULT_SWATCHES,
+  variants,
+  selectedId,
+  onSelect,
   className,
 }: ColorSwatchesProps) {
-  const [active, setActive] = useState(0);
-  const current = swatches[active] ?? swatches[0]!;
+  if (variants.length === 0) return null;
+
+  const selected =
+    variants.find((v) => v.id === selectedId) ?? variants[0]!;
 
   return (
     <div className={cn('mt-8', className)}>
@@ -39,26 +34,37 @@ export function ColorSwatches({
         <span className='text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground'>
           Colore
         </span>
-        <span className='text-[13px] font-medium'>{current.name}</span>
+        <span className='text-[13px] font-medium'>{selected.name}</span>
       </div>
-      <div className='flex flex-wrap gap-2.5' role='radiogroup' aria-label='Colore'>
-        {swatches.map((s, i) => {
-          const isActive = i === active;
+      <div
+        className='flex flex-wrap gap-2.5'
+        role='radiogroup'
+        aria-label='Colore'
+      >
+        {variants.map((v) => {
+          const isActive = v.id === selected.id;
+          const outOfStock = v.stock <= 0;
           return (
-            <button
-              key={s.name}
+            <Button
+              key={v.id}
               type='button'
               role='radio'
               aria-checked={isActive}
-              aria-label={s.name}
-              onClick={() => setActive(i)}
+              aria-label={
+                outOfStock ? `${v.name} — esaurito` : v.name
+              }
+              onClick={() => onSelect(v.id)}
               className={cn(
                 'relative size-11 rounded-full border border-border transition-transform',
                 'hover:scale-[1.06] focus-visible:outline-none',
                 isActive &&
                   'after:pointer-events-none after:absolute after:-inset-[5px] after:rounded-full after:border-[1.5px] after:border-foreground',
+                outOfStock &&
+                  'opacity-55 before:pointer-events-none before:absolute before:inset-0 before:rounded-full before:bg-[linear-gradient(135deg,transparent_calc(50%-1px),hsl(var(--background,0_0%_100%))_calc(50%-1px),hsl(var(--background,0_0%_100%))_calc(50%+1px),transparent_calc(50%+1px))]',
               )}
-              style={{ background: s.color }}
+              variant='ghost'
+              size='icon-sm'
+              style={{ background: v.hex }}
             />
           );
         })}

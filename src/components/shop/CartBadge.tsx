@@ -12,8 +12,8 @@ export function CartBadge() {
 
   return (
     <Badge
-      className='absolute -right-1 -top-1 tabular-nums'
-      aria-label={`${count} item${count === 1 ? '' : 's'} in cart`}
+      className='pointer-events-none absolute -right-2 -top-2 h-4 min-w-4 rounded-full border-2 border-background bg-accent px-1 text-[10px] leading-none font-semibold text-accent-foreground tabular-nums'
+      aria-label={`${count} articol${count === 1 ? 'o' : 'i'} nel carrello`}
     >
       {count}
     </Badge>

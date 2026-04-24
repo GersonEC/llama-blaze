@@ -44,6 +44,16 @@ export function ReservationItemRow({ item }: { item: ReservationItem }) {
             {item.productName}
           </Link>
         </Button>
+        {item.variantName && (
+          <p className='mt-0.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground'>
+            <span
+              aria-hidden='true'
+              className='size-[10px] rounded-full border border-border'
+              style={{ background: item.variantHex ?? 'transparent' }}
+            />
+            {item.variantName}
+          </p>
+        )}
         <p className='mt-0.5 text-xs text-muted-foreground'>
           {item.quantity}× {unitFormatted}
         </p>

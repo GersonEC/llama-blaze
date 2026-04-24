@@ -1,5 +1,10 @@
 import type { Currency, Money } from './money';
-import type { ProductCategory, ProductId, ProductSlug } from './product';
+import type {
+  ProductCategory,
+  ProductId,
+  ProductSlug,
+  ProductVariantId,
+} from './product';
 
 /**
  * Cart state lives entirely in the browser (localStorage via Zustand).
@@ -15,7 +20,7 @@ export interface CartItem {
   readonly currency: Currency;
   readonly image: string | null;
   readonly quantity: number;
-  /** Upper bound shown in the UI (product stock at time of add). */
+  /** Upper bound shown in the UI (variant or product stock at time of add). */
   readonly maxQuantity: number;
   /**
    * Snapshot of the product's category at add-time. Optional because older
@@ -23,6 +28,16 @@ export interface CartItem {
    * `undefined` / `null` as "uncategorised".
    */
   readonly category?: ProductCategory | null;
+  /**
+   * Selected color variant id. `null` when the product has no variants
+   * (legacy items persisted before variants existed deserialise as `null`
+   * via the store's persist migration).
+   */
+  readonly variantId: ProductVariantId | null;
+  /** Snapshot of the variant's display name; `null` when `variantId` is null. */
+  readonly variantName: string | null;
+  /** Snapshot of the variant's swatch color; `null` when `variantId` is null. */
+  readonly variantHex: string | null;
 }
 
 export interface CartSummary {

@@ -8,10 +8,8 @@ import {
   type Product,
   type ProductCategory,
 } from '@/lib/domain';
-import { cn } from '@/lib/utils';
-import { AddToCartButton } from './AddToCartButton';
 import { ProductAccordion } from './ProductAccordion';
-import { ColorSwatches } from './ColorSwatches';
+import { ProductPurchasePanel } from './ProductPurchasePanel';
 
 export interface ProductInfoProps {
   product: Product;
@@ -19,12 +17,11 @@ export interface ProductInfoProps {
 
 /**
  * Right-column of the PDP: back link, tagline, Fraunces display title with
- * its last word rendered in the accent color, price row with availability
- * indicator, lede, decorative color swatches, add-to-cart row, help
- * callout, and the static accordion.
+ * its last word rendered in the accent color, price row, lede, the
+ * interactive purchase panel (variant picker + availability + add-to-cart),
+ * help callout, and the static accordion.
  */
 export function ProductInfo({ product }: ProductInfoProps) {
-  const outOfStock = product.stock <= 0;
   const isDiscounted =
     !!product.discountPercentage && product.discountPercentage > 0;
   const finalAmount = finalPriceCents(
@@ -68,17 +65,14 @@ export function ProductInfo({ product }: ProductInfoProps) {
             {formatMoney(product.price)}
           </span>
         )}
-        <AvailabilityPill product={product} />
       </div>
 
       <p className='mt-5 max-w-[48ch] text-[15px] leading-[1.7] whitespace-pre-wrap text-muted-foreground'>
         {product.description || <em>La descrizione arriverà presto.</em>}
       </p>
 
-      <ColorSwatches />
-
-      <div className='mt-8'>
-        <AddToCartButton product={product} variant='pdp' />
+      <div className='mt-6'>
+        <ProductPurchasePanel product={product} />
       </div>
 
       <div className='mt-5 flex flex-wrap items-center justify-between gap-4 rounded-sm bg-muted px-[18px] py-3.5'>
@@ -95,15 +89,9 @@ export function ProductInfo({ product }: ProductInfoProps) {
         </Link>
       </div>
 
-      <div className='mt-10'>
+      {/* <div className='mt-10'>
         <ProductAccordion />
-      </div>
-
-      {outOfStock && (
-        <p className='mt-6 text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
-          Questo pezzo è esaurito — scrivici per sapere se tornerà.
-        </p>
-      )}
+      </div> */}
     </div>
   );
 }
@@ -124,35 +112,6 @@ function SplitAccentTitle({ text }: { text: string }) {
     <>
       {head} <em className='font-normal italic text-accent'>{last}</em>
     </>
-  );
-}
-
-function AvailabilityPill({ product }: { product: Product }) {
-  const outOfStock = product.stock <= 0;
-  const low = !outOfStock && product.stock <= 3;
-
-  const label = outOfStock
-    ? 'Esaurito'
-    : low
-      ? product.stock === 1
-        ? 'Ultimo pezzo'
-        : `Ultimi ${product.stock} pezzi`
-      : 'Disponibile';
-
-  const dotClass = outOfStock
-    ? 'bg-muted-foreground'
-    : low
-      ? 'bg-accent'
-      : 'bg-emerald-600';
-
-  return (
-    <span className='flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
-      <span
-        aria-hidden='true'
-        className={cn('size-[7px] rounded-full', dotClass)}
-      />
-      {label}
-    </span>
   );
 }
 

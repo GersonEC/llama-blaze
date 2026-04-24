@@ -165,7 +165,7 @@ function ReservationTicket({
       <ul className='flex flex-col px-[22px] pt-5 pb-2 sm:px-8'>
         {reservation.items.map((item) => (
           <TicketItemRow
-            key={item.productId}
+            key={`${item.productId}:${item.variantId ?? ''}`}
             item={item}
             enrichment={itemEnrichments?.[item.productId]}
           />
@@ -236,6 +236,16 @@ function TicketItemRow({
         <h5 className='truncate text-sm font-semibold tracking-[-0.005em]'>
           {item.productName}
         </h5>
+        {item.variantName && (
+          <span className='inline-flex items-center gap-1.5 text-[11px] text-muted-foreground'>
+            <span
+              aria-hidden='true'
+              className='size-[10px] rounded-full border border-border'
+              style={{ background: item.variantHex ?? 'transparent' }}
+            />
+            {item.variantName}
+          </span>
+        )}
         <span className='text-xs text-muted-foreground'>
           <span className='sr-only'>Quantità: </span>
           {item.quantity > 1

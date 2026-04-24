@@ -1,5 +1,5 @@
 import type { Money } from './money';
-import type { ProductId, ProductSlug } from './product';
+import type { ProductId, ProductSlug, ProductVariantId } from './product';
 
 /** Opaque id for a reservation row (UUID). */
 export type ReservationId = string & { readonly __brand: 'ReservationId' };
@@ -58,6 +58,16 @@ export interface ReservationItem {
   readonly quantity: number;
   /** Resolved public URL of the first product image. `null` when unavailable. */
   readonly thumbnailUrl?: string | null;
+  /**
+   * Snapshot of the variant's id at purchase time. `null` when the product
+   * had no variants. The FK onto `product_variants` is `on delete restrict`,
+   * so this id stays valid until the variant is explicitly removed.
+   */
+  readonly variantId: ProductVariantId | null;
+  /** Snapshot of the variant's display name; `null` when no variant was selected. */
+  readonly variantName: string | null;
+  /** Snapshot of the variant's swatch color; `null` when no variant was selected. */
+  readonly variantHex: string | null;
 }
 
 export interface Reservation {
@@ -76,5 +86,7 @@ export interface NewReservationInput {
   readonly items: ReadonlyArray<{
     readonly productId: ProductId;
     readonly quantity: number;
+    /** Required when the target product has any variants; otherwise must be null. */
+    readonly variantId?: ProductVariantId | null;
   }>;
 }
