@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2Icon } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
-import { AdminLoginSchema } from '@/lib/domain/schemas';
+import { SetPasswordSchema } from '@/lib/domain/schemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -15,10 +14,14 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 
-export function LoginForm({ redirectTo }: { redirectTo: string }) {
+/**
+ * Lets a signed-in user (typically arriving from an invite or recovery email)
+ * set a new password. After success, redirects into `/admin`.
+ */
+export function SetPasswordForm() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -26,7 +29,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
     e.preventDefault();
     setError(null);
 
-    const parsed = AdminLoginSchema.safeParse({ email, password });
+    const parsed = SetPasswordSchema.safeParse({ password, confirm });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? 'Dati non validi');
       return;
@@ -34,12 +37,14 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
 
     startTransition(async () => {
       const supabase = getSupabaseBrowserClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword(parsed.data);
-      if (signInError) {
-        setError(signInError.message);
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: parsed.data.password,
+      });
+      if (updateError) {
+        setError(updateError.message);
         return;
       }
-      router.replace(redirectTo);
+      router.replace('/admin');
       router.refresh();
     });
   }
@@ -48,32 +53,28 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
     <form onSubmit={onSubmit}>
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor='login-email'>Email</FieldLabel>
+          <FieldLabel htmlFor='set-password'>Nuova password</FieldLabel>
           <Input
-            id='login-email'
-            type='email'
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete='email'
-          />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor='login-password'>Password</FieldLabel>
-          <Input
-            id='login-password'
+            id='set-password'
             type='password'
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            autoComplete='current-password'
+            minLength={8}
+            autoComplete='new-password'
           />
-          <Link
-            href='/admin/forgot-password'
-            className='text-sm text-muted-foreground hover:text-foreground'
-          >
-            Password dimenticata?
-          </Link>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor='set-password-confirm'>Conferma password</FieldLabel>
+          <Input
+            id='set-password-confirm'
+            type='password'
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            required
+            minLength={8}
+            autoComplete='new-password'
+          />
         </Field>
         {error && (
           <Alert variant='destructive'>
@@ -84,10 +85,10 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
           {isPending ? (
             <>
               <Loader2Icon data-icon='inline-start' className='animate-spin' />
-              Accesso in corso…
+              Salvataggio…
             </>
           ) : (
-            'Accedi'
+            'Salva password'
           )}
         </Button>
       </FieldGroup>

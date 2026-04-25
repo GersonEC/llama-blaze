@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Loader2Icon } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
-import { AdminLoginSchema } from '@/lib/domain/schemas';
+import { publicEnv } from '@/lib/env';
+import { ForgotPasswordSchema } from '@/lib/domain/schemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -15,18 +14,22 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 
-export function LoginForm({ redirectTo }: { redirectTo: string }) {
-  const router = useRouter();
+/**
+ * Sends a password-recovery email via Supabase. We always show the same
+ * success message regardless of whether the address exists, to avoid
+ * leaking user enumeration.
+ */
+export function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    const parsed = AdminLoginSchema.safeParse({ email, password });
+    const parsed = ForgotPasswordSchema.safeParse({ email });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? 'Dati non validi');
       return;
@@ -34,46 +37,39 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
 
     startTransition(async () => {
       const supabase = getSupabaseBrowserClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword(parsed.data);
-      if (signInError) {
-        setError(signInError.message);
-        return;
-      }
-      router.replace(redirectTo);
-      router.refresh();
+      // We deliberately ignore the returned error so we don't disclose
+      // whether the email is registered.
+      await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+        redirectTo: `${publicEnv.siteUrl}/auth/callback?next=/admin/set-password`,
+      });
+      setSent(true);
     });
+  }
+
+  if (sent) {
+    return (
+      <Alert>
+        <AlertDescription>
+          Se l&apos;indirizzo è registrato, riceverai a breve un&apos;email con
+          le istruzioni per reimpostare la password.
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   return (
     <form onSubmit={onSubmit}>
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor='login-email'>Email</FieldLabel>
+          <FieldLabel htmlFor='forgot-email'>Email</FieldLabel>
           <Input
-            id='login-email'
+            id='forgot-email'
             type='email'
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete='email'
           />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor='login-password'>Password</FieldLabel>
-          <Input
-            id='login-password'
-            type='password'
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete='current-password'
-          />
-          <Link
-            href='/admin/forgot-password'
-            className='text-sm text-muted-foreground hover:text-foreground'
-          >
-            Password dimenticata?
-          </Link>
         </Field>
         {error && (
           <Alert variant='destructive'>
@@ -84,10 +80,10 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
           {isPending ? (
             <>
               <Loader2Icon data-icon='inline-start' className='animate-spin' />
-              Accesso in corso…
+              Invio in corso…
             </>
           ) : (
-            'Accedi'
+            'Invia email di recupero'
           )}
         </Button>
       </FieldGroup>

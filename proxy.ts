@@ -39,8 +39,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     const { data } = await supabase.auth.getUser();
     const pathname = request.nextUrl.pathname;
 
-    // Admin gate. Let `/admin/login` through so users can actually sign in.
-    if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+    // Admin gate. Let public auth flows through so users can sign in,
+    // request a recovery email, or land on /auth/callback after clicking
+    // an invite/recovery link.
+    const isPublicAuthPath =
+      pathname === '/admin/login' ||
+      pathname === '/admin/forgot-password' ||
+      pathname.startsWith('/auth/callback');
+    if (pathname.startsWith('/admin') && !isPublicAuthPath) {
       const email = data.user?.email ?? null;
       if (!email || !isAdminEmail(email)) {
         const url = request.nextUrl.clone();

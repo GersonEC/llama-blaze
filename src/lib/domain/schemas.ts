@@ -170,3 +170,21 @@ export const AdminLoginSchema = z.object({
   password: z.string().min(6, 'Password too short'),
 });
 export type AdminLoginInput = z.infer<typeof AdminLoginSchema>;
+
+/** Set / change password form (used by invite acceptance + recovery). */
+export const SetPasswordSchema = z
+  .object({
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    confirm: z.string(),
+  })
+  .refine((data) => data.password === data.confirm, {
+    path: ['confirm'],
+    message: 'Passwords do not match',
+  });
+export type SetPasswordInput = z.infer<typeof SetPasswordSchema>;
+
+/** Forgot-password form. */
+export const ForgotPasswordSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Enter a valid email'),
+});
+export type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>;
