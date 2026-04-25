@@ -123,8 +123,8 @@ export default async function EditProductPage({
           status: product.status,
           category: product.category,
           discountPercentage: product.discountPercentage,
-          acquisitionCostCents: product.acquisitionCost?.amount ?? null,
-          shippingCostCents: product.shippingCost?.amount ?? null,
+          acquisitionCostCents: product.acquisitionCost.amount,
+          shippingCostCents: product.shippingCost.amount,
           variants: product.variants.map((v) => ({
             id: v.id,
             name: v.name,
@@ -137,8 +137,8 @@ export default async function EditProductPage({
           <RestockCard
             productId={product.id}
             currentStock={product.stock}
-            defaultUnitCostCents={product.acquisitionCost?.amount ?? null}
-            defaultShippingCostCents={product.shippingCost?.amount ?? null}
+            defaultUnitCostCents={product.acquisitionCost.amount}
+            defaultShippingCostCents={product.shippingCost.amount}
             variants={product.variants.map((v) => ({
               id: v.id,
               name: v.name,

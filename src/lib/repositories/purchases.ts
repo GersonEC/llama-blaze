@@ -82,6 +82,36 @@ export async function recordProductPurchase(
 }
 
 /**
+ * Append a `product_purchases` ledger row for a freshly-created product.
+ *
+ * Unlike `recordProductPurchase`, this does NOT call the
+ * `record_product_purchase` RPC and does NOT bump stock or rewrite the
+ * product's cost columns — the caller (`createProduct`) has already inserted
+ * the product row with the admin-entered stock and cost values directly. This
+ * helper is purely about adding the matching cashflow Uscita entry.
+ */
+export async function recordInitialProductPurchase(
+  client: Client,
+  args: {
+    readonly productId: string;
+    readonly quantity: number;
+    readonly unitCostCents: number;
+    readonly shippingCostCents: number;
+    readonly currency: string;
+  },
+): Promise<void> {
+  const { error } = await client.from('product_purchases').insert({
+    product_id: args.productId,
+    quantity: args.quantity,
+    unit_cost_cents: args.unitCostCents,
+    shipping_cost_cents: args.shippingCostCents,
+    currency: args.currency,
+    notes: 'Acquisto iniziale',
+  });
+  if (error) throw error;
+}
+
+/**
  * Variant-scoped counterpart to `recordProductPurchase`. Delegates to the
  * `record_variant_purchase` RPC which atomically appends the ledger row,
  * bumps the variant's stock (cascading into `products.stock` via trigger),

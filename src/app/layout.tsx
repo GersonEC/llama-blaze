@@ -45,8 +45,8 @@ export default function RootLayout({
       )}
     >
       <body className='min-h-full flex flex-col bg-background text-foreground'>
+        <Toaster position='top-right' />
         {children}
-        <Toaster />
       </body>
     </html>
   );

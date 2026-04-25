@@ -41,6 +41,7 @@ export function SlugInput({
           'min-w-0 flex-1 bg-transparent pl-0 pr-3.5 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
           inputClassName,
         )}
+        placeholder='nome-prodotto-123'
       />
     </div>
   );

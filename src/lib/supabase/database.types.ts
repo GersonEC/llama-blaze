@@ -37,8 +37,8 @@ export type Database = {
           status: Database['public']['Enums']['product_status'];
           category: Database['public']['Enums']['product_category'] | null;
           discount_percentage: number | null;
-          acquisition_cost_cents: number | null;
-          shipping_cost_cents: number | null;
+          acquisition_cost_cents: number;
+          shipping_cost_cents: number;
           created_at: string;
           updated_at: string;
         };
@@ -54,8 +54,8 @@ export type Database = {
           status?: Database['public']['Enums']['product_status'];
           category?: Database['public']['Enums']['product_category'] | null;
           discount_percentage?: number | null;
-          acquisition_cost_cents?: number | null;
-          shipping_cost_cents?: number | null;
+          acquisition_cost_cents?: number;
+          shipping_cost_cents?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -71,8 +71,8 @@ export type Database = {
           status?: Database['public']['Enums']['product_status'];
           category?: Database['public']['Enums']['product_category'] | null;
           discount_percentage?: number | null;
-          acquisition_cost_cents?: number | null;
-          shipping_cost_cents?: number | null;
+          acquisition_cost_cents?: number;
+          shipping_cost_cents?: number;
           created_at?: string;
           updated_at?: string;
         };

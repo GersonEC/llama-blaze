@@ -76,13 +76,13 @@ export function ProductCard({
     <Link
       href={href}
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-md border border-border bg-background',
+        'group relative flex w-full flex-col overflow-hidden rounded-md border border-border bg-background',
         'transition-shadow duration-300 hover:shadow-[0_18px_40px_-24px_rgba(0,0,0,0.18)]',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
         className,
       )}
     >
-      <div className='relative aspect-3/4 w-full overflow-hidden bg-muted'>
+      <div className='relative aspect-square w-full overflow-hidden bg-muted'>
         {imageSrc ? (
           <Image
             src={imageSrc}
@@ -109,7 +109,7 @@ export function ProductCard({
         ) : null}
       </div>
 
-      <div className='flex flex-col px-5 pt-5 pb-5'>
+      <div className='flex flex-1 flex-col px-5 pt-5 pb-5'>
         {category && (
           <span className='mb-2.5 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground'>
             {category}
@@ -121,7 +121,7 @@ export function ProductCard({
 
         {swatches && swatches.length > 0 && <SwatchRow swatches={swatches} />}
 
-        <div className='mt-4 flex items-baseline gap-3 border-t border-border pt-4'>
+        <div className='mt-auto flex items-baseline gap-3 border-t border-border pt-4'>
           <ProductCardPrice
             fullPrice={fullPrice}
             finalPrice={finalPrice}

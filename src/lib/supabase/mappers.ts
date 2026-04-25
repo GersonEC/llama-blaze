@@ -45,14 +45,8 @@ export function toProduct(
     status: row.status,
     category: row.category,
     discountPercentage: row.discount_percentage,
-    acquisitionCost:
-      row.acquisition_cost_cents == null
-        ? null
-        : { amount: cents(row.acquisition_cost_cents), currency },
-    shippingCost:
-      row.shipping_cost_cents == null
-        ? null
-        : { amount: cents(row.shipping_cost_cents), currency },
+    acquisitionCost: { amount: cents(row.acquisition_cost_cents), currency },
+    shippingCost: { amount: cents(row.shipping_cost_cents), currency },
     variants,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),

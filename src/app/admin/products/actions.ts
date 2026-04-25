@@ -23,6 +23,7 @@ import {
   uploadProductImage,
 } from '@/lib/repositories/products';
 import {
+  recordInitialProductPurchase,
   recordProductPurchase,
   recordVariantPurchase,
 } from '@/lib/repositories/purchases';
@@ -45,8 +46,8 @@ interface ProductFormPayload {
   status: ProductStatus;
   category: ProductCategory | null;
   discountPercentage: number | null;
-  acquisitionCostCents: number | null;
-  shippingCostCents: number | null;
+  acquisitionCostCents: number;
+  shippingCostCents: number;
   variants: ProductVariantDraft[];
 }
 
@@ -87,7 +88,30 @@ async function upsertInternal(
     const product = productId
       ? await updateProduct(supabase, productId, parsed.data)
       : await createProduct(supabase, parsed.data);
+
+    // On creation only, mirror the entered stock + costs into the cashflow
+    // ledger so the new product shows up as an Uscita. Best-effort: if this
+    // fails we still consider the product created — admin can always use the
+    // Reintegro flow to add the entry manually.
+    if (!productId && product.stock > 0) {
+      try {
+        await recordInitialProductPurchase(supabase, {
+          productId: product.id,
+          quantity: product.stock,
+          unitCostCents: parsed.data.acquisitionCostCents,
+          shippingCostCents: parsed.data.shippingCostCents,
+          currency: product.price.currency,
+        });
+      } catch (err) {
+        console.error(
+          '[createProductAction] initial purchase ledger insert failed',
+          err,
+        );
+      }
+    }
+
     revalidatePath('/admin/products');
+    revalidatePath('/admin/cashflow');
     revalidatePath('/shop');
     revalidatePath(`/shop/${product.slug}`);
     return { ok: true, productId: product.id };

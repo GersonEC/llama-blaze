@@ -131,13 +131,14 @@ export interface Product {
   /** Integer in `1..90`; `null` means no discount is active. */
   readonly discountPercentage: number | null;
   /**
-   * Latest per-unit acquisition cost paid to the supplier. `null` means never
-   * recorded. Updated automatically by `record_product_purchase` so form
-   * defaults and margin calculations track reality.
+   * Latest per-unit acquisition cost paid to the supplier. Defaults to 0 for
+   * legacy products that pre-date cost tracking; updated automatically by
+   * `record_product_purchase` so form defaults and margin calculations track
+   * reality.
    */
-  readonly acquisitionCost: Money | null;
-  /** Latest per-unit shipping cost paid to bring stock in. `null` means none recorded. */
-  readonly shippingCost: Money | null;
+  readonly acquisitionCost: Money;
+  /** Latest per-unit shipping cost paid to bring stock in. Defaults to 0. */
+  readonly shippingCost: Money;
   /**
    * Color variants attached to the product. Empty when the product has no
    * color options (legacy behaviour — stock is then managed directly on the
@@ -161,10 +162,10 @@ export interface ProductDraft {
   readonly status: ProductStatus;
   readonly category: ProductCategory | null;
   readonly discountPercentage: number | null;
-  /** Latest per-unit acquisition cost in cents, or `null` to clear. */
-  readonly acquisitionCostCents: number | null;
-  /** Latest per-unit shipping cost in cents, or `null` to clear. */
-  readonly shippingCostCents: number | null;
+  /** Latest per-unit acquisition cost in cents. Required (use 0 for none). */
+  readonly acquisitionCostCents: number;
+  /** Latest per-unit shipping cost in cents. Required (use 0 for none). */
+  readonly shippingCostCents: number;
   /**
    * Color variants to persist. When non-empty, the top-level `stock` field
    * is ignored server-side — per-variant stock becomes authoritative and
@@ -186,13 +187,9 @@ export function finalPriceCents(
   return Math.round((fullPriceCents * (100 - pct)) / 100);
 }
 
-/**
- * Total per-unit cost (acquisition + shipping) in cents. Returns `null` when
- * either cost hasn't been recorded yet — margin can't be computed without both.
- */
+/** Total per-unit cost (acquisition + shipping) in cents. */
 export function unitCostCents(
   p: Pick<Product, 'acquisitionCost' | 'shippingCost'>,
-): number | null {
-  if (p.acquisitionCost == null || p.shippingCost == null) return null;
+): number {
   return p.acquisitionCost.amount + p.shippingCost.amount;
 }

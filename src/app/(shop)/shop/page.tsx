@@ -82,9 +82,9 @@ export default async function ShopPage({
             </EmptyHeader>
           </Empty>
         ) : (
-          <ul className='grid grid-cols-1 place-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+          <ul className='grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3'>
             {visible.map((product, i) => (
-              <li key={product.id}>
+              <li key={product.id} className='flex'>
                 <ProductCard
                   href={`/shop/${product.slug}`}
                   name={product.name}

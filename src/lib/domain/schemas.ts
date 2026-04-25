@@ -11,12 +11,10 @@ const slugSchema = z
   .max(80)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase letters, numbers, and hyphens');
 
-const nonNegativeCentsSchema = z
+const requiredCentsSchema = z
   .number()
   .int('Must be a whole number of cents')
-  .nonnegative('Cannot be negative')
-  .nullable()
-  .default(null);
+  .nonnegative('Cannot be negative');
 
 /** One color option in the admin product form. */
 export const ProductVariantFormSchema = z.object({
@@ -53,8 +51,8 @@ export const ProductFormSchema = z
       .max(90, 'Discount cannot exceed 90%')
       .nullable()
       .default(null),
-    acquisitionCostCents: nonNegativeCentsSchema,
-    shippingCostCents: nonNegativeCentsSchema,
+    acquisitionCostCents: requiredCentsSchema,
+    shippingCostCents: requiredCentsSchema,
     variants: z.array(ProductVariantFormSchema).max(20).default([]),
   })
   .superRefine((data, ctx) => {

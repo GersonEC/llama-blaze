@@ -63,8 +63,8 @@ export interface ProductFormInitial {
   status: ProductStatus;
   category: ProductCategory | null;
   discountPercentage: number | null;
-  acquisitionCostCents: number | null;
-  shippingCostCents: number | null;
+  acquisitionCostCents: number;
+  shippingCostCents: number;
   variants: ProductVariantDraft[];
 }
 
@@ -90,8 +90,8 @@ const BLANK: ProductFormInitial = {
   status: 'draft',
   category: null,
   discountPercentage: null,
-  acquisitionCostCents: null,
-  shippingCostCents: null,
+  acquisitionCostCents: 0,
+  shippingCostCents: 0,
   variants: [],
 };
 
@@ -128,14 +128,10 @@ export function ProductForm({
     ((initial?.priceCents ?? 0) / 100).toFixed(2),
   );
   const [acquisitionMajor, setAcquisitionMajor] = useState<string>(
-    initial?.acquisitionCostCents != null
-      ? (initial.acquisitionCostCents / 100).toFixed(2)
-      : '',
+    ((initial?.acquisitionCostCents ?? 0) / 100).toFixed(2),
   );
   const [shippingMajor, setShippingMajor] = useState<string>(
-    initial?.shippingCostCents != null
-      ? (initial.shippingCostCents / 100).toFixed(2)
-      : '',
+    ((initial?.shippingCostCents ?? 0) / 100).toFixed(2),
   );
   const [discountInput, setDiscountInput] = useState<string>(
     initial?.discountPercentage != null ? String(initial.discountPercentage) : '',
@@ -155,11 +151,10 @@ export function ProductForm({
 
   async function handleUpload(file: File) {
     if (!state.slug) {
-      setError('Imposta uno slug prima di caricare immagini.');
+      toast.error('Imposta uno slug prima di caricare immagini.');
       return;
     }
     setUploading(true);
-    setError(null);
     try {
       const fd = new FormData();
       fd.set('file', file);
@@ -169,7 +164,7 @@ export function ProductForm({
         setField('imagePaths', [...state.imagePaths, result.path]);
         toast.success('Immagine caricata');
       } else {
-        setError(result.error);
+        toast.error(result.error);
       }
     } finally {
       setUploading(false);
@@ -208,25 +203,25 @@ export function ProductForm({
       discountPercentage = n;
     }
 
-    const parseMajorToCents = (input: string): number | null | 'invalid' => {
+    const parseRequiredMajorToCents = (input: string): number | 'invalid' => {
       const trimmed = input.trim();
-      if (trimmed === '') return null;
+      if (trimmed === '') return 'invalid';
       const n = Number(trimmed);
       if (!Number.isFinite(n) || n < 0) return 'invalid';
       return Math.round(n * 100);
     };
 
-    const acquisitionParsed = parseMajorToCents(acquisitionMajor);
+    const acquisitionParsed = parseRequiredMajorToCents(acquisitionMajor);
     if (acquisitionParsed === 'invalid') {
       setFieldErrors({
-        acquisitionCostCents: ['Inserisci un costo valido o lascia vuoto'],
+        acquisitionCostCents: ['Inserisci un costo valido'],
       });
       return;
     }
-    const shippingParsed = parseMajorToCents(shippingMajor);
+    const shippingParsed = parseRequiredMajorToCents(shippingMajor);
     if (shippingParsed === 'invalid') {
       setFieldErrors({
-        shippingCostCents: ['Inserisci un costo valido o lascia vuoto'],
+        shippingCostCents: ['Inserisci un costo valido'],
       });
       return;
     }
@@ -557,7 +552,7 @@ export function ProductForm({
                 }
               >
                 <FieldLabel htmlFor='product-acquisition-cost'>
-                  Costo di acquisto
+                  Costo di acquisto <RequiredMark />
                 </FieldLabel>
                 <InputAffix
                   id='product-acquisition-cost'
@@ -565,7 +560,7 @@ export function ProductForm({
                   value={acquisitionMajor}
                   onChange={(e) => setAcquisitionMajor(e.target.value)}
                   inputMode='decimal'
-                  placeholder='12.50'
+                  required
                   aria-invalid={
                     fieldErrors.acquisitionCostCents ? true : undefined
                   }
@@ -576,7 +571,9 @@ export function ProductForm({
                   </FieldError>
                 ) : (
                   <FieldDescription>
-                    Per unità. Aggiornato automaticamente dai reintegri.
+                    Per unità. Sarà registrato come acquisto iniziale nel
+                    cashflow alla creazione, e aggiornato dai reintegri
+                    successivi.
                   </FieldDescription>
                 )}
               </Field>
@@ -585,7 +582,7 @@ export function ProductForm({
                 data-invalid={fieldErrors.shippingCostCents ? true : undefined}
               >
                 <FieldLabel htmlFor='product-shipping-cost'>
-                  Costo di spedizione
+                  Costo di spedizione <RequiredMark />
                 </FieldLabel>
                 <InputAffix
                   id='product-shipping-cost'
@@ -593,7 +590,7 @@ export function ProductForm({
                   value={shippingMajor}
                   onChange={(e) => setShippingMajor(e.target.value)}
                   inputMode='decimal'
-                  placeholder='2.00'
+                  required
                   aria-invalid={
                     fieldErrors.shippingCostCents ? true : undefined
                   }
@@ -604,7 +601,7 @@ export function ProductForm({
                   </FieldError>
                 ) : (
                   <FieldDescription>
-                    Per unità. Usato per calcolare il margine.
+                    Per unità. Concorre al cashflow e al calcolo del margine.
                   </FieldDescription>
                 )}
               </Field>

@@ -41,9 +41,9 @@ interface RestockCardProps {
   productId: string;
   /** Current stock, shown in the header so you see the effect of your restock. */
   currentStock: number;
-  /** Pre-fills the cost inputs from the product's last known values, if any. */
-  defaultUnitCostCents: number | null;
-  defaultShippingCostCents: number | null;
+  /** Pre-fills the cost inputs from the product's last known values. */
+  defaultUnitCostCents: number;
+  defaultShippingCostCents: number;
   /**
    * Color variants attached to the product. When non-empty, the restock form
    * forces the admin to pick which variant to restock — the RPC decrements
