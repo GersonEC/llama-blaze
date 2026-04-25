@@ -28,7 +28,7 @@ export default async function SetPasswordPage() {
   }
 
   return (
-    <div className='flex justify-center'>
+    <div className='flex min-h-[calc(100dvh-12rem)] items-center justify-center'>
       <Card className='w-full max-w-sm'>
         <CardHeader>
           <CardTitle className='text-2xl'>Imposta la tua password</CardTitle>

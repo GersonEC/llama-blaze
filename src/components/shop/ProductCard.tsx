@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { ArrowRightIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatMoney } from '@/lib/format';
 import { cents, finalPriceCents, type Money } from '@/lib/domain';
@@ -25,22 +26,23 @@ export interface ProductCardProps {
   priority?: boolean;
   className?: string;
   /**
-   * Optional color options shown as a small row of dots under the name.
-   * Up to 4 swatches are rendered — the rest collapse to a "+N" chip. Pass
-   * `undefined` or an empty array to hide the row entirely (products with no
-   * color variants keep the original layout).
+   * Optional color options shown as a row of dots under the name. Real
+   * variants only — never mocked. Up to 4 are rendered; the rest collapse
+   * to a "+N" chip. Pass `undefined` or an empty array to hide the row.
    */
   swatches?: ReadonlyArray<{ id: string; name: string; hex: string }>;
 }
 
 /**
- * Reusable product card. Derives `finalPrice` from `fullPrice` and
- * `discountPercentage` internally — callers never compute money.
+ * Editorial product card. Tall photo, serif display type, wax-seal discount
+ * stamp, and a slide-up CTA on hover (pure CSS — stays a Server Component).
  *
  * Visual contract:
- *   - No discount → single-line bold price.
- *   - With discount → strikethrough full price + accent-red final price + a
- *     top-left `-{pct}%` badge. An SR-only note announces the sale.
+ *   - No discount → single Fraunces price.
+ *   - With discount → Fraunces final price + strikethrough full price + a
+ *     wax-seal "-N% / SALDI" stamp top-right; "Risparmi €X" appears next to
+ *     the price. An SR-only note announces the sale.
+ *   - "Novità" and low-stock notices keep a small rectangular badge top-left.
  */
 export function ProductCard({
   href,
@@ -61,25 +63,33 @@ export function ProductCard({
   const finalPrice: Money = isDiscounted
     ? { amount: cents(finalAmount), currency: fullPrice.currency }
     : fullPrice;
+  const savedAmount: Money | null = isDiscounted
+    ? {
+        amount: cents(fullPrice.amount - finalAmount),
+        currency: fullPrice.currency,
+      }
+    : null;
 
-  const badge = pickBadge({ isDiscounted, discountPercentage, isNew, stock });
+  const cornerBadge = pickCornerBadge({ isDiscounted, isNew, stock });
 
   return (
     <Link
       href={href}
       className={cn(
-        'group relative flex flex-col focus:outline-none',
+        'group relative flex flex-col overflow-hidden rounded-md border border-border bg-background',
+        'transition-shadow duration-300 hover:shadow-[0_18px_40px_-24px_rgba(0,0,0,0.18)]',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
         className,
       )}
     >
-      <div className='relative aspect-3/4 w-full rounded-t-md overflow-hidden border bg-muted'>
+      <div className='relative aspect-3/4 w-full overflow-hidden bg-muted'>
         {imageSrc ? (
           <Image
             src={imageSrc}
             alt={imageAlt ?? name}
             fill
             sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
-            className='object-cover transition-transform duration-700 group-hover:scale-[1.04]'
+            className='object-cover object-[center_30%] transition-transform duration-700 ease-[cubic-bezier(0.2,0.6,0.2,1)] group-hover:scale-[1.04]'
             priority={priority}
           />
         ) : (
@@ -88,38 +98,41 @@ export function ProductCard({
           </div>
         )}
 
-        {badge && (
-          <span
-            className={cn(
-              'absolute left-3.5 top-3.5 z-10 px-2.5 py-[5px]',
-              'text-[10px] font-bold uppercase tracking-[0.18em]',
-              badge.tone === 'accent'
-                ? 'bg-accent text-accent-foreground'
-                : 'bg-primary text-primary-foreground',
-            )}
-          >
-            {badge.label}
+        {cornerBadge && (
+          <span className='absolute left-3.5 top-3.5 z-10 px-2.5 py-[5px] bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-[0.18em]'>
+            {cornerBadge}
           </span>
         )}
+
+        {isDiscounted && discountPercentage ? (
+          <WaxSeal percentage={discountPercentage} />
+        ) : null}
       </div>
 
-      <div className='flex flex-col gap-1 bg-muted/30 border border-t-0 p-4 rounded-b-md'>
+      <div className='flex flex-col px-5 pt-5 pb-5'>
         {category && (
-          <span className='text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground'>
+          <span className='mb-2.5 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground'>
             {category}
           </span>
         )}
-        <h3 className='text-[15px] font-semibold tracking-[-0.005em] text-foreground'>
+        <h3 className='font-(family-name:--font-fraunces) text-[22px] font-light leading-[1.18] tracking-[-0.012em] text-foreground'>
           {name}
         </h3>
+
         {swatches && swatches.length > 0 && <SwatchRow swatches={swatches} />}
-        <div className='mt-1.5 flex items-center justify-between'>
+
+        <div className='mt-4 flex items-baseline gap-3 border-t border-border pt-4'>
           <ProductCardPrice
             fullPrice={fullPrice}
             finalPrice={finalPrice}
             isDiscounted={isDiscounted}
             discountPercentage={discountPercentage ?? null}
           />
+          {savedAmount && (
+            <span className='ml-auto text-[11px] font-medium uppercase tracking-[0.12em] text-accent'>
+              Risparmi {formatMoney(savedAmount)}
+            </span>
+          )}
         </div>
       </div>
     </Link>
@@ -139,19 +152,42 @@ function ProductCardPrice({
 }) {
   if (!isDiscounted) {
     return (
-      <span className='text-sm font-semibold text-foreground'>
+      <span className='font-(family-name:--font-fraunces) text-[22px] font-normal tabular-nums text-foreground'>
         {formatMoney(fullPrice)}
       </span>
     );
   }
 
   return (
-    <span className='flex items-baseline gap-2 text-sm font-semibold'>
-      <s className='font-normal text-muted-foreground'>
+    <span className='flex items-baseline gap-3'>
+      <s className='font-(family-name:--font-fraunces) text-[16px] tabular-nums text-muted-foreground decoration-1'>
         {formatMoney(fullPrice)}
       </s>
-      <span className='text-accent'>{formatMoney(finalPrice)}</span>
+      <span className='font-(family-name:--font-fraunces) text-[22px] font-normal tabular-nums text-foreground'>
+        {formatMoney(finalPrice)}
+      </span>
       <span className='sr-only'>On sale, {discountPercentage}% off</span>
+    </span>
+  );
+}
+
+function WaxSeal({ percentage }: { percentage: number }) {
+  return (
+    <span
+      aria-hidden='true'
+      className={cn(
+        'absolute right-4 top-4 z-10 grid size-16 place-items-center rounded-full text-center',
+        'bg-accent text-accent-foreground',
+        'shadow-[0_4px_10px_rgba(0,0,0,0.18),inset_0_0_0_1px_rgba(255,255,255,0.15)]',
+        '-rotate-12 transition-transform duration-380 ease-[cubic-bezier(0.4,1.4,0.5,1)]',
+        'group-hover:-rotate-[8deg] group-hover:scale-105',
+      )}
+    >
+      <span className='flex flex-col items-center leading-none'>
+        <span className='font-(family-name:--font-fraunces) text-[22px] font-normal italic'>
+          −{percentage}%
+        </span>
+      </span>
     </span>
   );
 }
@@ -166,7 +202,7 @@ function SwatchRow({
   const extra = swatches.length - visible.length;
   return (
     <div
-      className='mt-1 flex items-center gap-1'
+      className='mt-4 flex items-center gap-2'
       aria-label={`${swatches.length} ${swatches.length === 1 ? 'colore' : 'colori'} disponibili`}
     >
       {visible.map((s) => (
@@ -174,12 +210,12 @@ function SwatchRow({
           key={s.id}
           aria-hidden='true'
           title={s.name}
-          className='size-[12px] rounded-full border border-border'
+          className='size-[18px] rounded-full border border-border/80 ring-offset-background'
           style={{ background: s.hex }}
         />
       ))}
       {extra > 0 && (
-        <span className='ml-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
+        <span className='ml-1 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground'>
           +{extra}
         </span>
       )}
@@ -187,22 +223,16 @@ function SwatchRow({
   );
 }
 
-type Badge = { label: string; tone: 'accent' | 'primary' };
-
-function pickBadge(args: {
+function pickCornerBadge(args: {
   isDiscounted: boolean;
-  discountPercentage?: number | null;
   isNew?: boolean;
   stock?: number;
-}): Badge | null {
-  if (args.isDiscounted && args.discountPercentage) {
-    return { label: `-${args.discountPercentage}%`, tone: 'accent' };
-  }
-  if (args.isNew) return { label: 'Novità', tone: 'accent' };
+}): string | null {
+  // The wax-seal stamp owns the discount story, so the corner badge focuses
+  // on freshness / scarcity cues instead.
+  if (args.isNew && !args.isDiscounted) return 'Novità';
   if (typeof args.stock === 'number' && args.stock > 0 && args.stock <= 3) {
-    return args.stock === 1
-      ? { label: 'Ultimo pezzo', tone: 'primary' }
-      : { label: `Ultimi ${args.stock} pezzi`, tone: 'primary' };
+    return args.stock === 1 ? 'Ultimo pezzo' : `Ultimi ${args.stock} pezzi`;
   }
   return null;
 }

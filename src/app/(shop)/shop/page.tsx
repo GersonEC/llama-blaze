@@ -56,26 +56,33 @@ export default async function ShopPage({
           <Empty className='border'>
             <EmptyHeader>
               <EmptyTitle>Nothing available right now</EmptyTitle>
-              <EmptyDescription>Check back soon for new drops.</EmptyDescription>
+              <EmptyDescription>
+                Check back soon for new drops.
+              </EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : visible.length === 0 ? (
           <Empty className='border'>
             <EmptyHeader>
               <EmptyTitle>
-                Nothing in {PRODUCT_CATEGORY_LABELS[active as Exclude<ShopCategoryFilterValue, 'all'>]}
+                Non ci sono prodotti in{' '}
+                {
+                  PRODUCT_CATEGORY_LABELS[
+                    active as Exclude<ShopCategoryFilterValue, 'all'>
+                  ]
+                }
               </EmptyTitle>
               <EmptyDescription>
-                Try another category —{' '}
+                Prova un'altra categoria —{' '}
                 <Link href='/shop' className='underline underline-offset-4'>
-                  see everything
+                  vedi tutto
                 </Link>
                 .
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : (
-          <ul className='grid grid-cols-1 gap-x-7 gap-y-12 pb-24 sm:grid-cols-2 lg:grid-cols-3'>
+          <ul className='grid grid-cols-1 place-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3'>
             {visible.map((product, i) => (
               <li key={product.id}>
                 <ProductCard
