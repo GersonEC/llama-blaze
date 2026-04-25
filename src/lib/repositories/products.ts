@@ -227,8 +227,46 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(client: Client, id: ProductId | string): Promise<void> {
+  const { data: existing, error: fetchErr } = await client
+    .from('products')
+    .select('slug, images')
+    .eq('id', id)
+    .maybeSingle();
+  if (fetchErr) throw fetchErr;
+  if (!existing) return;
+
   const { error } = await client.from('products').delete().eq('id', id);
   if (error) throw error;
+
+  try {
+    const paths = new Set<string>();
+
+    const { data: listed, error: listErr } = await client.storage
+      .from(PRODUCT_IMAGES_BUCKET)
+      .list(existing.slug, { limit: 1000 });
+    if (listErr) throw listErr;
+    for (const entry of listed ?? []) {
+      paths.add(`${existing.slug}/${entry.name}`);
+    }
+
+    for (const stored of existing.images ?? []) {
+      if (/^https?:\/\//.test(stored)) continue;
+      paths.add(stored);
+    }
+
+    if (paths.size > 0) {
+      const { error: removeErr } = await client.storage
+        .from(PRODUCT_IMAGES_BUCKET)
+        .remove([...paths]);
+      if (removeErr) throw removeErr;
+    }
+  } catch (cleanupErr) {
+    console.error('[deleteProduct] storage cleanup failed', {
+      productId: id,
+      slug: existing.slug,
+      error: cleanupErr,
+    });
+  }
 }
 
 /**
