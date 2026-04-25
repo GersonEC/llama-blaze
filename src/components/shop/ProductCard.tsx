@@ -109,19 +109,27 @@ export function ProductCard({
         ) : null}
       </div>
 
-      <div className='flex flex-1 flex-col px-5 pt-5 pb-5'>
-        {category && (
-          <span className='mb-2.5 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground'>
-            {category}
-          </span>
-        )}
-        <h3 className='font-(family-name:--font-fraunces) text-[22px] font-light leading-[1.18] tracking-[-0.012em] text-foreground'>
-          {name}
-        </h3>
+      <div className='flex flex-1 flex-col p-4'>
+        <div className='flex flex-col gap-3'>
+          {category && (
+            <span className='text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground'>
+              {category}
+            </span>
+          )}
+          <h3
+            className='line-clamp-2 min-h-[2.36em] font-(family-name:--font-fraunces) text-[22px] font-light leading-[1.18] tracking-[-0.012em] text-foreground'
+            title={name}
+          >
+            {name}
+          </h3>
+          <div className='h-[18px]'>
+            {swatches && swatches.length > 0 ? (
+              <SwatchRow swatches={swatches} />
+            ) : null}
+          </div>
+        </div>
 
-        {swatches && swatches.length > 0 && <SwatchRow swatches={swatches} />}
-
-        <div className='mt-auto flex items-baseline gap-3 border-t border-border pt-4'>
+        <div className='flex items-baseline justify-between gap-2'>
           <ProductCardPrice
             fullPrice={fullPrice}
             finalPrice={finalPrice}
@@ -129,7 +137,7 @@ export function ProductCard({
             discountPercentage={discountPercentage ?? null}
           />
           {savedAmount && (
-            <span className='ml-auto text-[11px] font-medium uppercase tracking-[0.12em] text-accent'>
+            <span className='ml-auto text-[10px] font-medium uppercase tracking-[0.12em] text-accent'>
               Risparmi {formatMoney(savedAmount)}
             </span>
           )}
@@ -202,7 +210,7 @@ function SwatchRow({
   const extra = swatches.length - visible.length;
   return (
     <div
-      className='mt-4 flex items-center gap-2'
+      className='flex items-center gap-2'
       aria-label={`${swatches.length} ${swatches.length === 1 ? 'colore' : 'colori'} disponibili`}
     >
       {visible.map((s) => (
