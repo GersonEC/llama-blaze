@@ -41,9 +41,8 @@ interface RestockCardProps {
   productId: string;
   /** Current stock, shown in the header so you see the effect of your restock. */
   currentStock: number;
-  /** Pre-fills the cost inputs from the product's last known values. */
+  /** Pre-fills the unit cost input from the product's last known value. */
   defaultUnitCostCents: number;
-  defaultShippingCostCents: number;
   /**
    * Color variants attached to the product. When non-empty, the restock form
    * forces the admin to pick which variant to restock — the RPC decrements
@@ -69,7 +68,6 @@ export function RestockCard({
   productId,
   currentStock,
   defaultUnitCostCents,
-  defaultShippingCostCents,
   variants = [],
 }: RestockCardProps) {
   const router = useRouter();
@@ -79,7 +77,7 @@ export function RestockCard({
   const [purchasedAt, setPurchasedAt] = useState(todayISO());
   const [quantity, setQuantity] = useState('1');
   const [unitCost, setUnitCost] = useState(centsToMajor(defaultUnitCostCents));
-  const [shippingCost, setShippingCost] = useState(centsToMajor(defaultShippingCostCents));
+  const [shippingCost, setShippingCost] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -90,7 +88,7 @@ export function RestockCard({
     setPurchasedAt(todayISO());
     setQuantity('1');
     setUnitCost(centsToMajor(defaultUnitCostCents));
-    setShippingCost(centsToMajor(defaultShippingCostCents));
+    setShippingCost('');
     setNotes('');
     setError(null);
     setFieldErrors({});
@@ -294,20 +292,23 @@ export function RestockCard({
                 </Field>
                 <Field data-invalid={fieldErrors.shippingCostCents ? true : undefined}>
                   <FieldLabel htmlFor='restock-shipping-cost'>
-                    Spedizione per unità
+                    Spedizione totale
                   </FieldLabel>
                   <Input
                     id='restock-shipping-cost'
                     value={shippingCost}
                     onChange={(e) => setShippingCost(e.target.value)}
                     inputMode='decimal'
-                    placeholder='es. 2.00'
+                    placeholder='es. 20.00'
                     aria-invalid={fieldErrors.shippingCostCents ? true : undefined}
                   />
                   {fieldErrors.shippingCostCents ? (
                     <FieldError>{fieldErrors.shippingCostCents.join(' · ')}</FieldError>
                   ) : (
-                    <FieldDescription>Lascia vuoto se la spedizione era gratis.</FieldDescription>
+                    <FieldDescription>
+                      Totale per questo lotto. Lascia vuoto se la spedizione
+                      era gratis.
+                    </FieldDescription>
                   )}
                 </Field>
               </div>

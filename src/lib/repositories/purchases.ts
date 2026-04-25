@@ -85,10 +85,13 @@ export async function recordProductPurchase(
  * Append a `product_purchases` ledger row for a freshly-created product.
  *
  * Unlike `recordProductPurchase`, this does NOT call the
- * `record_product_purchase` RPC and does NOT bump stock or rewrite the
- * product's cost columns — the caller (`createProduct`) has already inserted
- * the product row with the admin-entered stock and cost values directly. This
- * helper is purely about adding the matching cashflow Uscita entry.
+ * `record_product_purchase` RPC and does NOT bump stock — the caller
+ * (`createProduct`) has already inserted the product row with the
+ * admin-entered stock. The ledger row stores `shippingCostCents` as the
+ * **total** shipping cost for the batch (matches the new semantics applied
+ * everywhere). To keep `products.shipping_cost_cents` consistent with the
+ * RPC behaviour (per-unit reference for margin calc), we also overwrite the
+ * product's `shipping_cost_cents` column with `floor(total / quantity)`.
  */
 export async function recordInitialProductPurchase(
   client: Client,
@@ -109,6 +112,14 @@ export async function recordInitialProductPurchase(
     notes: 'Acquisto iniziale',
   });
   if (error) throw error;
+
+  const perUnitShippingCents =
+    args.quantity > 0 ? Math.floor(args.shippingCostCents / args.quantity) : 0;
+  const { error: productError } = await client
+    .from('products')
+    .update({ shipping_cost_cents: perUnitShippingCents })
+    .eq('id', args.productId);
+  if (productError) throw productError;
 }
 
 /**

@@ -66,7 +66,7 @@ export function ProductHistoryCard({ purchases, currency }: ProductHistoryCardPr
                       <>
                         {' '}
                         <span className='text-muted-foreground'>
-                          + spedizione{' '}
+                          + spedizione totale{' '}
                           {formatPriceCents(
                             p.shippingCost.amount,
                             p.shippingCost.currency,

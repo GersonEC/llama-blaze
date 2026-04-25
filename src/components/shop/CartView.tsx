@@ -308,10 +308,6 @@ function SummaryColumn({
   currency,
   hasMixedCurrencies,
 }: SummaryColumnProps) {
-  const subtotalCents = subtotalAmount ?? 0;
-  // Mirrors the Figma mock: prices are VAT-inclusive; surface the 22% portion.
-  const vatCents = Math.round((subtotalCents * 22) / 122);
-
   return (
     <aside className='sticky top-24 flex flex-col border border-border bg-background p-8 lg:p-9'>
       <h2 className='pb-6 font-(family-name:--font-fraunces) text-[28px] font-normal tracking-[-0.01em]'>
@@ -344,10 +340,6 @@ function SummaryColumn({
             value={
               <span className='font-semibold text-emerald-600'>Gratuita</span>
             }
-          />
-          <SumRow
-            label='IVA inclusa'
-            value={currency ? formatPriceCents(cents(vatCents), currency) : '—'}
           />
 
           <div className='mt-3.5 flex items-baseline justify-between border-t border-border pt-[22px]'>

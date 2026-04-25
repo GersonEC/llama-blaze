@@ -22,7 +22,7 @@ export interface ProductPurchase {
   readonly quantity: number;
   /** Per-unit cost paid to the supplier. */
   readonly unitCost: Money;
-  /** Per-unit shipping cost to bring the batch in. */
+  /** Total shipping cost for the whole batch (flat, not per unit). */
   readonly shippingCost: Money;
   readonly notes: string;
   readonly createdAt: Date;
@@ -39,7 +39,9 @@ export interface ProductPurchaseDraft {
   readonly notes: string;
 }
 
-/** Total outlay for a single purchase: (unit + shipping) * qty, in cents. */
+/** Total outlay for a single purchase: unit * qty + shipping_total, in cents. */
 export function purchaseTotalCents(purchase: ProductPurchase): number {
-  return (purchase.unitCost.amount + purchase.shippingCost.amount) * purchase.quantity;
+  return (
+    purchase.unitCost.amount * purchase.quantity + purchase.shippingCost.amount
+  );
 }

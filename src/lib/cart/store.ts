@@ -6,6 +6,7 @@ import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/shallow';
 import {
   cents,
+  finalPriceCents,
   type CartItem,
   type CartSummary,
   type Currency,
@@ -52,7 +53,10 @@ function productToCartItem(
     productId: product.id,
     slug: product.slug,
     name: product.name,
-    unitPriceCents: product.price.amount,
+    unitPriceCents: finalPriceCents(
+      product.price.amount,
+      product.discountPercentage,
+    ),
     currency: product.price.currency,
     image: product.images[0] ?? null,
     quantity,

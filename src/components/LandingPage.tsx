@@ -40,11 +40,24 @@ function LocalStyles() {
     <style>{`
       @keyframes lb-marquee { to { transform: translateX(-50%) } }
       @keyframes lb-spin { to { transform: translate(-50%, 0) rotate(360deg) } }
+      @keyframes lb-rotate-cw { to { transform: rotate(360deg) } }
+      @keyframes lb-float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-14px) } }
+      @keyframes lb-pulse-glow { 0%,100% { opacity: .45; transform: scale(1) } 50% { opacity: .85; transform: scale(1.08) } }
+      @keyframes lb-rise { from { opacity: 0; transform: translateY(28px) scale(.96) } to { opacity: 1; transform: translateY(0) scale(1) } }
       .lb-marquee-track { animation: lb-marquee 38s linear infinite; }
       .lb-value-track { animation: lb-marquee 28s linear infinite; }
       .lb-stamp { animation: lb-spin 22s linear infinite; }
+      .lb-rotate-cw { animation: lb-rotate-cw 24s linear infinite; transform-origin: center; transform-box: fill-box; }
+      .lb-float { animation: lb-float 6s ease-in-out infinite; }
+      .lb-pulse-glow { animation: lb-pulse-glow 4.5s ease-in-out infinite; }
+      .lb-rise { animation: lb-rise .9s cubic-bezier(.2,.7,.2,1) both; }
       .lb-dm-track::-webkit-scrollbar { height: 6px }
       .lb-dm-track::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.3); border-radius: 4px }
+      @media (prefers-reduced-motion: reduce) {
+        .lb-marquee-track, .lb-value-track, .lb-stamp, .lb-rotate-cw, .lb-float, .lb-pulse-glow, .lb-rise {
+          animation: none !important;
+        }
+      }
     `}</style>
   );
 }
@@ -107,33 +120,86 @@ function Hero() {
 
       <div
         aria-hidden='true'
-        className='absolute right-5 top-1/2 z-2 hidden aspect-1116/1390 w-[min(44vh,420px)] -translate-y-1/2 md:right-16 md:block'
-        style={{ filter: 'drop-shadow(0 30px 80px hsl(var(--accent) / 0.5))' }}
+        className='group absolute right-5 top-1/2 z-2 hidden aspect-1116/1390 w-[min(44vh,420px)] -translate-y-1/2 md:right-16 md:block'
       >
-        <Image
-          src='/llamablaze-logo.png'
-          alt=''
-          fill
-          sizes='420px'
-          className='object-contain'
-          priority
+        <div
+          className='lb-pulse-glow pointer-events-none absolute -inset-16 rounded-full'
+          style={{
+            background:
+              'radial-gradient(closest-side, hsl(var(--accent) / 0.65), transparent 72%)',
+            filter: 'blur(32px)',
+          }}
         />
+
+        <div className='lb-rise relative h-full w-full'>
+          <div className='lb-float h-full w-full transition-transform duration-700 ease-out group-hover:scale-[1.03]'>
+            <Image
+              src='/llamablaze-logo.png'
+              alt=''
+              fill
+              sizes='420px'
+              className='object-contain'
+              style={{
+                filter:
+                  'drop-shadow(0 24px 60px hsl(var(--accent) / 0.55)) drop-shadow(0 4px 12px rgba(0,0,0,.35))',
+              }}
+              priority
+            />
+          </div>
+        </div>
+
+        <div className='absolute -bottom-2 -left-10 h-28 w-28 md:-bottom-4 md:-left-14 md:h-36 md:w-36'>
+          <div
+            className='absolute inset-0 rounded-full bg-primary ring-1 ring-white/10'
+            style={{ boxShadow: '0 14px 36px rgba(0,0,0,.5)' }}
+          />
+          <svg
+            viewBox='0 0 200 200'
+            className='lb-rotate-cw absolute inset-0 h-full w-full'
+          >
+            <defs>
+              <path
+                id='lb-stamp-path'
+                d='M 100,100 m -76,0 a 76,76 0 1,1 152,0 a 76,76 0 1,1 -152,0'
+              />
+            </defs>
+            <text
+              style={{
+                fontFamily: 'var(--font-fraunces)',
+                fontSize: '15px',
+                letterSpacing: '0.22em',
+                fill: 'white',
+              }}
+            >
+              <textPath href='#lb-stamp-path' startOffset='0'>
+                ★ AUTHENTICATED ★ QUALITY CHECKED ★ HAND-PICKED IN MILAN
+              </textPath>
+            </text>
+          </svg>
+          <div className='absolute inset-0 grid place-items-center'>
+            <span
+              className={`${displayFont} text-3xl italic text-accent md:text-4xl`}
+            >
+              ✦
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div className='relative z-2 mx-auto flex h-full max-w-[1480px] flex-col justify-between px-5 pt-12 md:px-16'>
+      <div className='relative z-2 mx-auto flex h-full max-w-[1480px] flex-col justify-end px-5 pb-14 pt-12 md:px-16 md:pb-20'>
         <h1
-          className={`${displayFont} pt-6 text-[clamp(60px,13vw,220px)] font-light leading-[0.88] tracking-[-0.03em]`}
+          className={`${displayFont} max-w-[14ch] text-[clamp(56px,10.5vw,168px)] font-light leading-[0.86] tracking-[-0.035em]`}
         >
-          Fili
+          Premium Sneakers
           <br />
-          Aud<span className='italic font-normal text-accent'>a</span>ci,
-          <br />
-          <span className='italic font-normal'>senza</span>{' '}
-          <span className='text-transparent [-webkit-text-stroke:2px_#fff]'>
-            scuse
-          </span>
-          .
+          <span className='italic font-normal text-accent'>&</span> Accessories.
         </h1>
+        <div className='mt-6 flex items-center gap-4 md:mt-8'>
+          <span className='h-px w-12 bg-accent md:w-16' />
+          <span className='text-[11px] font-medium uppercase tracking-[0.32em] text-white/80'>
+            Quality Checked
+          </span>
+        </div>
       </div>
     </section>
   );

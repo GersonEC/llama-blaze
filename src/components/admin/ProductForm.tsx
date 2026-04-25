@@ -601,7 +601,8 @@ export function ProductForm({
                   </FieldError>
                 ) : (
                   <FieldDescription>
-                    Per unità. Concorre al cashflow e al calcolo del margine.
+                    Totale per questo lotto di acquisto. Concorre al cashflow e
+                    al calcolo del margine.
                   </FieldDescription>
                 )}
               </Field>

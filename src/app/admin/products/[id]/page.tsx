@@ -138,7 +138,6 @@ export default async function EditProductPage({
             productId={product.id}
             currentStock={product.stock}
             defaultUnitCostCents={product.acquisitionCost.amount}
-            defaultShippingCostCents={product.shippingCost.amount}
             variants={product.variants.map((v) => ({
               id: v.id,
               name: v.name,

@@ -407,10 +407,6 @@ function SummaryAside({
   currency,
   hasMixedCurrencies,
 }: SummaryAsideProps) {
-  const subtotalCents = subtotalAmount ?? 0;
-  // Mirrors the Figma mock: prices are VAT-inclusive; surface the 22% portion.
-  const vatCents = Math.round((subtotalCents * 22) / 122);
-
   return (
     <aside className='sticky top-24 flex flex-col border border-border bg-background p-8'>
       <div className='flex items-baseline justify-between border-b border-border pb-5'>
@@ -455,10 +451,6 @@ function SummaryAside({
             <SumRow
               label='Spedizione'
               value={<span className='text-muted-foreground'>—</span>}
-            />
-            <SumRow
-              label='IVA inclusa'
-              value={currency ? formatPriceCents(cents(vatCents), currency) : '—'}
             />
           </dl>
 

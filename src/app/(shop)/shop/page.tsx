@@ -55,9 +55,9 @@ export default async function ShopPage({
         {products.length === 0 ? (
           <Empty className='border'>
             <EmptyHeader>
-              <EmptyTitle>Nothing available right now</EmptyTitle>
+              <EmptyTitle>Nessun prodotto disponibile al momento</EmptyTitle>
               <EmptyDescription>
-                Check back soon for new drops.
+                Controlla di nuovo presto per le nuove uscite.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

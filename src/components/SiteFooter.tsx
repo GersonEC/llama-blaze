@@ -55,10 +55,12 @@ const socialIcons = [
   {
     label: 'Instagram',
     path: 'M12 2c2.7 0 3 0 4.1.1 2.6.1 3.8 1.4 3.9 3.9C20 7 20 7.3 20 12s0 5-.1 6c-.1 2.5-1.3 3.8-3.9 3.9-1 .1-1.4.1-4 .1s-3 0-4-.1c-2.6-.1-3.8-1.4-3.9-3.9C4 17 4 16.7 4 12s0-5 .1-6c.1-2.5 1.3-3.8 3.9-3.9C9 2 9.3 2 12 2zm0 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm5.3-3.3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z',
+    href: 'https://www.instagram.com/llama.blaze/',
   },
   {
     label: 'TikTok',
     path: 'M19 8.5a6.5 6.5 0 0 1-3.8-1.2V16a6 6 0 1 1-6-6v3a3 3 0 1 0 3 3V2h3a3.5 3.5 0 0 0 3.8 3.5v3z',
+    href: '#',
   },
 ];
 
@@ -85,16 +87,16 @@ export default function SiteFooter() {
               </span>
             </Link>
             <p className='my-5 max-w-[320px] text-[13.5px] leading-relaxed'>
-              Fili audaci, senza scuse. Fatti a mano a Milano dal 2019 —
-              indossati ovunque la luce sia sincera.
+              Premium Sneakers & Accessories Quality Checked
             </p>
             <div className='flex gap-2.5'>
               {socialIcons.map((s) => (
                 <Link
                   key={s.label}
-                  href='#'
+                  href={s.href}
                   aria-label={s.label}
                   className='grid h-10 w-10 place-items-center rounded-full border border-[#2a2a2a] transition-all hover:border-accent hover:bg-accent'
+                  target='_blank'
                 >
                   <svg viewBox='0 0 24 24' width='16' height='16' fill='#fff'>
                     <path d={s.path} />

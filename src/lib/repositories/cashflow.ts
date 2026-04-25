@@ -81,7 +81,7 @@ export async function listPurchaseEntries(
     productId: row.product_id,
     productName: row.products?.name ?? 'Prodotto eliminato',
     amountCents:
-      (row.unit_cost_cents + row.shipping_cost_cents) * row.quantity,
+      row.unit_cost_cents * row.quantity + row.shipping_cost_cents,
     quantity: row.quantity,
     date: new Date(row.purchased_at),
   }));
@@ -111,7 +111,7 @@ export async function getTreasuryBalanceCents(client: Client): Promise<number> {
   );
   const outCents = (purchasesResult.data ?? []).reduce(
     (sum, row) =>
-      sum + (row.unit_cost_cents + row.shipping_cost_cents) * row.quantity,
+      sum + row.unit_cost_cents * row.quantity + row.shipping_cost_cents,
     0,
   );
   return inCents - outCents;
