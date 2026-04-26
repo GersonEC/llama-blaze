@@ -27,7 +27,6 @@ import {
   recordInitialProductPurchase,
   recordProductPurchase,
   recordVariantPurchase,
-  syncInitialPurchaseQuantity,
 } from '@/lib/repositories/purchases';
 
 export interface ProductActionResult {
@@ -108,37 +107,25 @@ async function upsertInternal(
     const supabase = await getSupabaseServerClient();
     let product;
     if (productId) {
-      // After creation, acquisition + shipping cost are immutable from the
-      // product form — corrections must go through the Reintegro card so the
-      // ledger stays the source of truth. We re-read the stored values from
-      // the existing product and override whatever the (locked) form sent
-      // before forwarding to the repository.
-      //
-      // Edge case: products created with stock=0 never produced an initial
-      // ledger row; the admin must use Reintegro to register their first
-      // batch — editing stock from the form will not back-fill that row.
+      // After creation, stock and acquisition + shipping cost are immutable
+      // from the product form — Registra acquisto is the single source of
+      // truth for restocks and the cashflow ledger. We re-read the stored
+      // values from the existing product and override whatever the (locked)
+      // form sent before forwarding to the repository, so even a tampered
+      // payload can't move them. For variant products, the
+      // `product_variants_sync_stock_trg` trigger keeps `products.stock` in
+      // sync after variant edits.
       const existing = await findProductById(supabase, productId);
       if (!existing) {
         return { ok: false, error: 'Prodotto non trovato.' };
       }
       const safeData = {
         ...parsed.data,
+        stock: existing.stock,
         acquisitionCostCents: existing.acquisitionCost.amount,
         shippingCostCents: existing.shippingCost.amount,
       };
       product = await updateProduct(supabase, productId, safeData);
-
-      // Best-effort: when only the synthetic "Acquisto iniziale" ledger row
-      // exists, keep its quantity in sync with the new stock so Storico and
-      // Cashflow track reality. No-op once any reintegro has been recorded.
-      try {
-        await syncInitialPurchaseQuantity(supabase, productId, product.stock);
-      } catch (err) {
-        console.error(
-          '[updateProductAction] initial purchase quantity sync failed',
-          err,
-        );
-      }
     } else {
       product = await createProduct(supabase, parsed.data);
 

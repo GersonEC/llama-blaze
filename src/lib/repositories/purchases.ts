@@ -132,52 +132,6 @@ export async function recordInitialProductPurchase(
 }
 
 /**
- * Keep the synthetic "Acquisto iniziale" ledger row aligned with the product's
- * stock when the admin edits it from the product form. Costs and shipping are
- * intentionally left alone — the form locks those fields after creation, so
- * corrections must go through the Reintegro flow.
- *
- * Behaviour:
- *  - no-op if the product has zero or more than one purchase rows (later
- *    reintegri are off-limits to this sync),
- *  - no-op if the lone row isn't the initial-purchase marker,
- *  - if `newQuantity <= 0`, deletes the initial row so a stock=0 product
- *    doesn't leave a positive-quantity ledger entry behind,
- *  - otherwise updates the row's `quantity` to `newQuantity`.
- */
-export async function syncInitialPurchaseQuantity(
-  client: Client,
-  productId: string,
-  newQuantity: number,
-): Promise<void> {
-  const { data: rows, error } = await client
-    .from('product_purchases')
-    .select('id, notes')
-    .eq('product_id', productId);
-
-  if (error) throw error;
-  if (!rows || rows.length !== 1) return;
-
-  const [row] = rows;
-  if (row.notes !== INITIAL_PURCHASE_NOTE) return;
-
-  if (newQuantity <= 0) {
-    const { error: deleteError } = await client
-      .from('product_purchases')
-      .delete()
-      .eq('id', row.id);
-    if (deleteError) throw deleteError;
-    return;
-  }
-
-  const { error: updateError } = await client
-    .from('product_purchases')
-    .update({ quantity: newQuantity })
-    .eq('id', row.id);
-  if (updateError) throw updateError;
-}
-
-/**
  * Variant-scoped counterpart to `recordProductPurchase`. Delegates to the
  * `record_variant_purchase` RPC which atomically appends the ledger row,
  * bumps the variant's stock (cascading into `products.stock` via trigger),

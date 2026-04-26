@@ -434,7 +434,7 @@ export function ProductForm({
 
                 <Field data-invalid={fieldErrors.stock ? true : undefined}>
                   <FieldLabel htmlFor='product-stock'>
-                    Scorte <RequiredMark />
+                    Scorte {!isEdit && <RequiredMark />}
                   </FieldLabel>
                   <Input
                     id='product-stock'
@@ -447,15 +447,17 @@ export function ProductForm({
                         : state.stock,
                     )}
                     onChange={(e) => {
-                      if (state.variants.length > 0) return;
+                      if (isEdit || state.variants.length > 0) return;
                       setField(
                         'stock',
                         Math.max(0, Math.floor(Number(e.target.value) || 0)),
                       );
                     }}
                     inputMode='numeric'
-                    required={state.variants.length === 0}
+                    required={!isEdit && state.variants.length === 0}
                     readOnly={state.variants.length > 0}
+                    disabled={isEdit && state.variants.length === 0}
+                    aria-readonly={isEdit ? true : undefined}
                     aria-invalid={fieldErrors.stock ? true : undefined}
                   />
                   {fieldErrors.stock ? (
@@ -467,8 +469,8 @@ export function ProductForm({
                     </FieldDescription>
                   ) : mode === 'edit' ? (
                     <FieldDescription>
-                      Gestito dai reintegri. Modifica manualmente solo per
-                      correzioni.
+                      Modifica tramite la card Reintegro per registrare un
+                      nuovo acquisto.
                     </FieldDescription>
                   ) : null}
                 </Field>

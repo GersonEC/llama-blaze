@@ -740,13 +740,7 @@ function Reviews() {
       <div className='mx-auto max-w-[1480px]'>
         <SectionHead
           eyebrow='● Recensioni dai DM'
-          title={
-            <>
-              Cosa dice <em className='italic text-accent'>il branco</em>
-              <br />
-              su di noi.
-            </>
-          }
+          title={<>Cosa dicono i nostri clienti.</>}
           meta={
             <>
               <span className='uppercase tracking-[0.15em]'>
@@ -1426,4 +1420,3 @@ function LoaferPlaceholder() {
     </svg>
   );
 }
-
