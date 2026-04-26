@@ -34,7 +34,13 @@ const STATUS_STRIPE: Record<ReservationStatus, string> = {
   cancelled: 'bg-red-500',
 };
 
-function StatusTile({ status, count }: { status: ReservationStatus; count: number }) {
+function StatusTile({
+  status,
+  count,
+}: {
+  status: ReservationStatus;
+  count: number;
+}) {
   return (
     <Link
       href={`/admin/reservations?status=${status}`}
@@ -42,10 +48,7 @@ function StatusTile({ status, count }: { status: ReservationStatus; count: numbe
     >
       <span
         aria-hidden
-        className={cn(
-          'absolute inset-y-0 left-0 w-1',
-          STATUS_STRIPE[status],
-        )}
+        className={cn('absolute inset-y-0 left-0 w-1', STATUS_STRIPE[status])}
       />
       <div className='pl-2'>
         <div className='text-[9.5px] font-semibold uppercase tracking-[0.12em] text-muted-foreground'>
@@ -109,10 +112,25 @@ export function ReservationsCard({
       </CardHeader>
 
       <CardContent className='flex flex-col gap-5'>
-        <div className='grid grid-cols-2 gap-2 sm:grid-cols-5'>
-          {RESERVATION_STATUSES.map((status) => (
-            <StatusTile key={status} status={status} count={counts[status]} />
-          ))}
+        <div className='flex flex-col gap-2'>
+          <div className='grid grid-cols-3 gap-2'>
+            {(['pending', 'contacted', 'confirmed'] as const).map((status) => (
+              <StatusTile
+                key={status}
+                status={status}
+                count={counts[status]}
+              />
+            ))}
+          </div>
+          <div className='grid grid-cols-2 gap-2'>
+            {(['completed', 'cancelled'] as const).map((status) => (
+              <StatusTile
+                key={status}
+                status={status}
+                count={counts[status]}
+              />
+            ))}
+          </div>
         </div>
 
         <Separator />
@@ -142,7 +160,8 @@ export function ReservationsCard({
                           {r.customer.name}
                         </div>
                         <div className='truncate text-xs text-muted-foreground'>
-                          {itemCount} {itemCount === 1 ? 'articolo' : 'articoli'} ·{' '}
+                          {itemCount}{' '}
+                          {itemCount === 1 ? 'articolo' : 'articoli'} ·{' '}
                           {formatDateTime(r.createdAt)}
                         </div>
                       </div>
