@@ -315,364 +315,362 @@ export function ProductForm({
   }));
 
   return (
-    <form
-      ref={formRef}
-      onSubmit={handleSubmit}
-      className='grid gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-start'
-    >
-      <fieldset
-        disabled={isPending}
-        className='flex flex-col gap-5 lg:gap-6'
-      >
-        <legend className='sr-only'>Dettagli prodotto</legend>
+    <div className='grid gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-start'>
+      <form ref={formRef} onSubmit={handleSubmit}>
+        <fieldset
+          disabled={isPending}
+          className='flex flex-col gap-5 lg:gap-6'
+        >
+          <legend className='sr-only'>Dettagli prodotto</legend>
 
-        {/* Dettagli */}
-        <Card>
-          <CardHeader>
-            <SectionCardTitle
-              title='Dettagli'
-              hint='Informazioni visibili nel negozio'
-            />
-          </CardHeader>
-          <CardContent className='flex flex-col gap-5'>
-            <Field data-invalid={fieldErrors.name ? true : undefined}>
-              <FieldLabel htmlFor='product-name'>
-                Nome <RequiredMark />
-              </FieldLabel>
-              <Input
-                id='product-name'
-                value={state.name}
-                onChange={(e) => setField('name', e.target.value)}
-                required
-                aria-invalid={fieldErrors.name ? true : undefined}
+          {/* Dettagli */}
+          <Card>
+            <CardHeader>
+              <SectionCardTitle
+                title='Dettagli'
+                hint='Informazioni visibili nel negozio'
               />
-              {fieldErrors.name && (
-                <FieldError>{fieldErrors.name.join(' · ')}</FieldError>
-              )}
-            </Field>
-
-            <Field data-invalid={fieldErrors.slug ? true : undefined}>
-              <FieldLabel htmlFor='product-slug'>
-                Slug <RequiredMark />
-              </FieldLabel>
-              <SlugInput
-                id='product-slug'
-                value={state.slug}
-                onChange={(e) =>
-                  setField('slug', e.target.value.toLowerCase())
-                }
-                required
-                aria-invalid={fieldErrors.slug ? true : undefined}
-              />
-              {fieldErrors.slug ? (
-                <FieldError>{fieldErrors.slug.join(' · ')}</FieldError>
-              ) : (
-                <FieldDescription>
-                  Solo lettere minuscole, numeri e trattini. Usato in{' '}
-                  <code className='font-mono text-foreground/80'>
-                    /shop/[slug]
-                  </code>
-                  .
-                </FieldDescription>
-              )}
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor='product-description'>Descrizione</FieldLabel>
-              <Textarea
-                id='product-description'
-                rows={6}
-                value={state.description}
-                onChange={(e) => setField('description', e.target.value)}
-                placeholder='Racconta il prodotto — materiali, storia, chi lo fa…'
-              />
-            </Field>
-          </CardContent>
-        </Card>
-
-        {/* Prezzo e inventario */}
-        <Card>
-          <CardHeader>
-            <SectionCardTitle title='Prezzo e inventario' />
-          </CardHeader>
-          <CardContent className='flex flex-col gap-5'>
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-[1fr_130px_1fr]'>
-              <Field data-invalid={fieldErrors.priceCents ? true : undefined}>
-                <FieldLabel htmlFor='product-price'>
-                  Prezzo <RequiredMark />
+            </CardHeader>
+            <CardContent className='flex flex-col gap-5'>
+              <Field data-invalid={fieldErrors.name ? true : undefined}>
+                <FieldLabel htmlFor='product-name'>
+                  Nome <RequiredMark />
                 </FieldLabel>
-                <InputAffix
-                  id='product-price'
-                  left='€'
-                  right={state.currency}
-                  value={priceMajor}
-                  onChange={(e) => setPriceMajor(e.target.value)}
-                  inputMode='decimal'
+                <Input
+                  id='product-name'
+                  value={state.name}
+                  onChange={(e) => setField('name', e.target.value)}
                   required
-                  aria-invalid={fieldErrors.priceCents ? true : undefined}
+                  aria-invalid={fieldErrors.name ? true : undefined}
                 />
-                {fieldErrors.priceCents && (
-                  <FieldError>{fieldErrors.priceCents.join(' · ')}</FieldError>
+                {fieldErrors.name && (
+                  <FieldError>{fieldErrors.name.join(' · ')}</FieldError>
+                )}
+              </Field>
+
+              <Field data-invalid={fieldErrors.slug ? true : undefined}>
+                <FieldLabel htmlFor='product-slug'>
+                  Slug <RequiredMark />
+                </FieldLabel>
+                <SlugInput
+                  id='product-slug'
+                  value={state.slug}
+                  onChange={(e) =>
+                    setField('slug', e.target.value.toLowerCase())
+                  }
+                  required
+                  aria-invalid={fieldErrors.slug ? true : undefined}
+                />
+                {fieldErrors.slug ? (
+                  <FieldError>{fieldErrors.slug.join(' · ')}</FieldError>
+                ) : (
+                  <FieldDescription>
+                    Solo lettere minuscole, numeri e trattini. Usato in{' '}
+                    <code className='font-mono text-foreground/80'>
+                      /shop/[slug]
+                    </code>
+                    .
+                  </FieldDescription>
                 )}
               </Field>
 
               <Field>
-                <FieldLabel htmlFor='product-currency'>Valuta</FieldLabel>
-                <Select
-                  value={state.currency}
-                  onValueChange={(v) => setField('currency', v)}
-                >
-                  <SelectTrigger id='product-currency' className='w-full'>
-                    <SelectValue placeholder='Seleziona' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {SUPPORTED_CURRENCIES.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
+                <FieldLabel htmlFor='product-description'>Descrizione</FieldLabel>
+                <Textarea
+                  id='product-description'
+                  rows={6}
+                  value={state.description}
+                  onChange={(e) => setField('description', e.target.value)}
+                  placeholder='Racconta il prodotto — materiali, storia, chi lo fa…'
+                />
               </Field>
+            </CardContent>
+          </Card>
 
-              <Field data-invalid={fieldErrors.stock ? true : undefined}>
-                <FieldLabel htmlFor='product-stock'>
-                  Scorte <RequiredMark />
-                </FieldLabel>
-                <Input
-                  id='product-stock'
-                  value={String(
-                    state.variants.length > 0
-                      ? state.variants.reduce(
-                          (sum, v) => sum + Math.max(0, v.stock),
-                          0,
-                        )
-                      : state.stock,
+          {/* Prezzo e inventario */}
+          <Card>
+            <CardHeader>
+              <SectionCardTitle title='Prezzo e inventario' />
+            </CardHeader>
+            <CardContent className='flex flex-col gap-5'>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-[1fr_130px_1fr]'>
+                <Field data-invalid={fieldErrors.priceCents ? true : undefined}>
+                  <FieldLabel htmlFor='product-price'>
+                    Prezzo <RequiredMark />
+                  </FieldLabel>
+                  <InputAffix
+                    id='product-price'
+                    left='€'
+                    right={state.currency}
+                    value={priceMajor}
+                    onChange={(e) => setPriceMajor(e.target.value)}
+                    inputMode='decimal'
+                    required
+                    aria-invalid={fieldErrors.priceCents ? true : undefined}
+                  />
+                  {fieldErrors.priceCents && (
+                    <FieldError>{fieldErrors.priceCents.join(' · ')}</FieldError>
                   )}
-                  onChange={(e) => {
-                    if (state.variants.length > 0) return;
-                    setField(
-                      'stock',
-                      Math.max(0, Math.floor(Number(e.target.value) || 0)),
-                    );
-                  }}
-                  inputMode='numeric'
-                  required={state.variants.length === 0}
-                  readOnly={state.variants.length > 0}
-                  aria-invalid={fieldErrors.stock ? true : undefined}
-                />
-                {fieldErrors.stock ? (
-                  <FieldError>{fieldErrors.stock.join(' · ')}</FieldError>
-                ) : state.variants.length > 0 ? (
-                  <FieldDescription>
-                    Somma delle scorte per colore. Modifica i valori nella
-                    sezione Colori.
-                  </FieldDescription>
-                ) : mode === 'edit' ? (
-                  <FieldDescription>
-                    Gestito dai reintegri. Modifica manualmente solo per
-                    correzioni.
-                  </FieldDescription>
-                ) : null}
-              </Field>
-            </div>
+                </Field>
 
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-              <Field data-invalid={fieldErrors.category ? true : undefined}>
-                <FieldLabel htmlFor='product-category'>Categoria</FieldLabel>
-                <Select
-                  value={state.category ?? UNCATEGORISED}
-                  onValueChange={(v) =>
-                    setField(
-                      'category',
-                      v === UNCATEGORISED ? null : (v as ProductCategory),
-                    )
-                  }
-                >
-                  <SelectTrigger id='product-category' className='w-full'>
-                    <SelectValue placeholder='Seleziona' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value={UNCATEGORISED}>
-                        Senza categoria
-                      </SelectItem>
-                      {PRODUCT_CATEGORIES.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {PRODUCT_CATEGORY_LABELS[c]}
+                <Field>
+                  <FieldLabel htmlFor='product-currency'>Valuta</FieldLabel>
+                  <Select
+                    value={state.currency}
+                    onValueChange={(v) => setField('currency', v)}
+                  >
+                    <SelectTrigger id='product-currency' className='w-full'>
+                      <SelectValue placeholder='Seleziona' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {SUPPORTED_CURRENCIES.map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {c}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <Field data-invalid={fieldErrors.stock ? true : undefined}>
+                  <FieldLabel htmlFor='product-stock'>
+                    Scorte <RequiredMark />
+                  </FieldLabel>
+                  <Input
+                    id='product-stock'
+                    value={String(
+                      state.variants.length > 0
+                        ? state.variants.reduce(
+                            (sum, v) => sum + Math.max(0, v.stock),
+                            0,
+                          )
+                        : state.stock,
+                    )}
+                    onChange={(e) => {
+                      if (state.variants.length > 0) return;
+                      setField(
+                        'stock',
+                        Math.max(0, Math.floor(Number(e.target.value) || 0)),
+                      );
+                    }}
+                    inputMode='numeric'
+                    required={state.variants.length === 0}
+                    readOnly={state.variants.length > 0}
+                    aria-invalid={fieldErrors.stock ? true : undefined}
+                  />
+                  {fieldErrors.stock ? (
+                    <FieldError>{fieldErrors.stock.join(' · ')}</FieldError>
+                  ) : state.variants.length > 0 ? (
+                    <FieldDescription>
+                      Somma delle scorte per colore. Modifica i valori nella
+                      sezione Colori.
+                    </FieldDescription>
+                  ) : mode === 'edit' ? (
+                    <FieldDescription>
+                      Gestito dai reintegri. Modifica manualmente solo per
+                      correzioni.
+                    </FieldDescription>
+                  ) : null}
+                </Field>
+              </div>
+
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                <Field data-invalid={fieldErrors.category ? true : undefined}>
+                  <FieldLabel htmlFor='product-category'>Categoria</FieldLabel>
+                  <Select
+                    value={state.category ?? UNCATEGORISED}
+                    onValueChange={(v) =>
+                      setField(
+                        'category',
+                        v === UNCATEGORISED ? null : (v as ProductCategory),
+                      )
+                    }
+                  >
+                    <SelectTrigger id='product-category' className='w-full'>
+                      <SelectValue placeholder='Seleziona' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value={UNCATEGORISED}>
+                          Senza categoria
                         </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                {fieldErrors.category ? (
-                  <FieldError>{fieldErrors.category.join(' · ')}</FieldError>
-                ) : (
-                  <FieldDescription>
-                    Usata dai filtri del negozio.
-                  </FieldDescription>
-                )}
-              </Field>
+                        {PRODUCT_CATEGORIES.map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {PRODUCT_CATEGORY_LABELS[c]}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {fieldErrors.category ? (
+                    <FieldError>{fieldErrors.category.join(' · ')}</FieldError>
+                  ) : (
+                    <FieldDescription>
+                      Usata dai filtri del negozio.
+                    </FieldDescription>
+                  )}
+                </Field>
 
-              <Field
-                data-invalid={fieldErrors.discountPercentage ? true : undefined}
-              >
-                <FieldLabel htmlFor='product-discount'>Sconto %</FieldLabel>
-                <InputAffix
-                  id='product-discount'
-                  right='%'
-                  value={discountInput}
-                  onChange={(e) => setDiscountInput(e.target.value)}
-                  inputMode='numeric'
-                  placeholder='es. 20'
-                  aria-invalid={
-                    fieldErrors.discountPercentage ? true : undefined
-                  }
-                />
-                {fieldErrors.discountPercentage ? (
-                  <FieldError>
-                    {fieldErrors.discountPercentage.join(' · ')}
-                  </FieldError>
-                ) : (
-                  <FieldDescription>
-                    Lascia vuoto per nessuno sconto.{' '}
-                    <span className='font-semibold text-foreground/80'>1–90</span>{' '}
-                    per mostrare un prezzo scontato.
-                  </FieldDescription>
-                )}
-              </Field>
-            </div>
+                <Field
+                  data-invalid={fieldErrors.discountPercentage ? true : undefined}
+                >
+                  <FieldLabel htmlFor='product-discount'>Sconto %</FieldLabel>
+                  <InputAffix
+                    id='product-discount'
+                    right='%'
+                    value={discountInput}
+                    onChange={(e) => setDiscountInput(e.target.value)}
+                    inputMode='numeric'
+                    placeholder='es. 20'
+                    aria-invalid={
+                      fieldErrors.discountPercentage ? true : undefined
+                    }
+                  />
+                  {fieldErrors.discountPercentage ? (
+                    <FieldError>
+                      {fieldErrors.discountPercentage.join(' · ')}
+                    </FieldError>
+                  ) : (
+                    <FieldDescription>
+                      Lascia vuoto per nessuno sconto.{' '}
+                      <span className='font-semibold text-foreground/80'>1–90</span>{' '}
+                      per mostrare un prezzo scontato.
+                    </FieldDescription>
+                  )}
+                </Field>
+              </div>
 
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-              <Field
-                data-invalid={
-                  fieldErrors.acquisitionCostCents ? true : undefined
-                }
-              >
-                <FieldLabel htmlFor='product-acquisition-cost'>
-                  Costo di acquisto <RequiredMark />
-                </FieldLabel>
-                <InputAffix
-                  id='product-acquisition-cost'
-                  left='€'
-                  value={acquisitionMajor}
-                  onChange={(e) => setAcquisitionMajor(e.target.value)}
-                  inputMode='decimal'
-                  required
-                  aria-invalid={
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                <Field
+                  data-invalid={
                     fieldErrors.acquisitionCostCents ? true : undefined
                   }
-                />
-                {fieldErrors.acquisitionCostCents ? (
-                  <FieldError>
-                    {fieldErrors.acquisitionCostCents.join(' · ')}
-                  </FieldError>
-                ) : (
-                  <FieldDescription>
-                    Per unità. Sarà registrato come acquisto iniziale nel
-                    cashflow alla creazione, e aggiornato dai reintegri
-                    successivi.
-                  </FieldDescription>
-                )}
-              </Field>
+                >
+                  <FieldLabel htmlFor='product-acquisition-cost'>
+                    Costo di acquisto <RequiredMark />
+                  </FieldLabel>
+                  <InputAffix
+                    id='product-acquisition-cost'
+                    left='€'
+                    value={acquisitionMajor}
+                    onChange={(e) => setAcquisitionMajor(e.target.value)}
+                    inputMode='decimal'
+                    required
+                    aria-invalid={
+                      fieldErrors.acquisitionCostCents ? true : undefined
+                    }
+                  />
+                  {fieldErrors.acquisitionCostCents ? (
+                    <FieldError>
+                      {fieldErrors.acquisitionCostCents.join(' · ')}
+                    </FieldError>
+                  ) : (
+                    <FieldDescription>
+                      Per unità. Sarà registrato come acquisto iniziale nel
+                      cashflow alla creazione, e aggiornato dai reintegri
+                      successivi.
+                    </FieldDescription>
+                  )}
+                </Field>
 
-              <Field
-                data-invalid={fieldErrors.shippingCostCents ? true : undefined}
-              >
-                <FieldLabel htmlFor='product-shipping-cost'>
-                  Costo di spedizione <RequiredMark />
-                </FieldLabel>
-                <InputAffix
-                  id='product-shipping-cost'
-                  left='€'
-                  value={shippingMajor}
-                  onChange={(e) => setShippingMajor(e.target.value)}
-                  inputMode='decimal'
-                  required
-                  aria-invalid={
-                    fieldErrors.shippingCostCents ? true : undefined
-                  }
-                />
-                {fieldErrors.shippingCostCents ? (
-                  <FieldError>
-                    {fieldErrors.shippingCostCents.join(' · ')}
-                  </FieldError>
-                ) : (
-                  <FieldDescription>
-                    Totale per questo lotto di acquisto. Concorre al cashflow e
-                    al calcolo del margine.
-                  </FieldDescription>
-                )}
-              </Field>
-            </div>
-          </CardContent>
-        </Card>
+                <Field
+                  data-invalid={fieldErrors.shippingCostCents ? true : undefined}
+                >
+                  <FieldLabel htmlFor='product-shipping-cost'>
+                    Costo di spedizione <RequiredMark />
+                  </FieldLabel>
+                  <InputAffix
+                    id='product-shipping-cost'
+                    left='€'
+                    value={shippingMajor}
+                    onChange={(e) => setShippingMajor(e.target.value)}
+                    inputMode='decimal'
+                    required
+                    aria-invalid={
+                      fieldErrors.shippingCostCents ? true : undefined
+                    }
+                  />
+                  {fieldErrors.shippingCostCents ? (
+                    <FieldError>
+                      {fieldErrors.shippingCostCents.join(' · ')}
+                    </FieldError>
+                  ) : (
+                    <FieldDescription>
+                      Totale per questo lotto di acquisto. Concorre al cashflow e
+                      al calcolo del margine.
+                    </FieldDescription>
+                  )}
+                </Field>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Colori */}
-        <Card>
-          <CardHeader>
-            <SectionCardTitle
-              title='Colori'
-              hint='Ogni colore ha le sue scorte'
-            />
-          </CardHeader>
-          <CardContent>
-            <VariantsEditor
-              variants={state.variants}
-              onChange={(next) => setField('variants', next)}
-              disabled={isPending}
-              fieldErrors={fieldErrors}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Visibilità */}
-        <Card>
-          <CardHeader>
-            <SectionCardTitle title='Visibilità' />
-          </CardHeader>
-          <CardContent>
-            <Field data-invalid={fieldErrors.status ? true : undefined}>
-              <ProductVisibilityField
-                value={state.status}
-                onChange={(v) => setField('status', v)}
+          {/* Colori */}
+          <Card>
+            <CardHeader>
+              <SectionCardTitle
+                title='Colori'
+                hint='Ogni colore ha le sue scorte'
+              />
+            </CardHeader>
+            <CardContent>
+              <VariantsEditor
+                variants={state.variants}
+                onChange={(next) => setField('variants', next)}
                 disabled={isPending}
+                fieldErrors={fieldErrors}
               />
-              {fieldErrors.status && (
-                <FieldError>{fieldErrors.status.join(' · ')}</FieldError>
+            </CardContent>
+          </Card>
+
+          {/* Visibilità */}
+          <Card>
+            <CardHeader>
+              <SectionCardTitle title='Visibilità' />
+            </CardHeader>
+            <CardContent>
+              <Field data-invalid={fieldErrors.status ? true : undefined}>
+                <ProductVisibilityField
+                  value={state.status}
+                  onChange={(v) => setField('status', v)}
+                  disabled={isPending}
+                />
+                {fieldErrors.status && (
+                  <FieldError>{fieldErrors.status.join(' · ')}</FieldError>
+                )}
+              </Field>
+            </CardContent>
+          </Card>
+
+          {error && (
+            <Alert variant='destructive'>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Action bar */}
+          <div className='flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5'>
+            <Button asChild variant='ghost' size='sm'>
+              <Link href='/admin/products'>Annulla</Link>
+            </Button>
+            <Button type='submit' disabled={isPending}>
+              {isPending && (
+                <Loader2Icon
+                  data-icon='inline-start'
+                  className='animate-spin'
+                />
               )}
-            </Field>
-          </CardContent>
-        </Card>
-
-        {error && (
-          <Alert variant='destructive'>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Action bar */}
-        <div className='flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5'>
-          <Button asChild variant='ghost' size='sm'>
-            <Link href='/admin/products'>Annulla</Link>
-          </Button>
-          <Button type='submit' disabled={isPending}>
-            {isPending && (
-              <Loader2Icon
-                data-icon='inline-start'
-                className='animate-spin'
-              />
-            )}
-            {isPending
-              ? 'Salvataggio…'
-              : mode === 'create'
-                ? 'Crea prodotto'
-                : 'Salva modifiche'}
-          </Button>
-        </div>
-      </fieldset>
+              {isPending
+                ? 'Salvataggio…'
+                : mode === 'create'
+                  ? 'Crea prodotto'
+                  : 'Salva modifiche'}
+            </Button>
+          </div>
+        </fieldset>
+      </form>
 
       <aside className='flex flex-col gap-5 lg:gap-6 lg:sticky lg:top-6'>
         <Card>
@@ -695,7 +693,7 @@ export function ProductForm({
         </Card>
         {sidebar}
       </aside>
-    </form>
+    </div>
   );
 }
 
