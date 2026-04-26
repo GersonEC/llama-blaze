@@ -38,18 +38,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { InputAffix } from './InputAffix';
 import { SlugInput } from './SlugInput';
-import {
-  ProductImageGrid,
-  type ProductImage,
-} from './ProductImageGrid';
+import { ProductImageGrid, type ProductImage } from './ProductImageGrid';
 import { ProductVisibilityField } from './ProductVisibilityField';
 
 export interface ProductFormInitial {
@@ -134,7 +126,9 @@ export function ProductForm({
     ((initial?.shippingCostCents ?? 0) / 100).toFixed(2),
   );
   const [discountInput, setDiscountInput] = useState<string>(
-    initial?.discountPercentage != null ? String(initial.discountPercentage) : '',
+    initial?.discountPercentage != null
+      ? String(initial.discountPercentage)
+      : '',
   );
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -302,7 +296,9 @@ export function ProductForm({
         setFieldErrors(result.fieldErrors ?? {});
         return;
       }
-      toast.success(mode === 'create' ? 'Prodotto creato' : 'Modifiche salvate');
+      toast.success(
+        mode === 'create' ? 'Prodotto creato' : 'Modifiche salvate',
+      );
       router.push('/admin/products');
       router.refresh();
     });
@@ -317,10 +313,7 @@ export function ProductForm({
   return (
     <div className='grid gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-start'>
       <form ref={formRef} onSubmit={handleSubmit}>
-        <fieldset
-          disabled={isPending}
-          className='flex flex-col gap-5 lg:gap-6'
-        >
+        <fieldset disabled={isPending} className='flex flex-col gap-5 lg:gap-6'>
           <legend className='sr-only'>Dettagli prodotto</legend>
 
           {/* Dettagli */}
@@ -375,7 +368,9 @@ export function ProductForm({
               </Field>
 
               <Field>
-                <FieldLabel htmlFor='product-description'>Descrizione</FieldLabel>
+                <FieldLabel htmlFor='product-description'>
+                  Descrizione
+                </FieldLabel>
                 <Textarea
                   id='product-description'
                   rows={6}
@@ -409,7 +404,9 @@ export function ProductForm({
                     aria-invalid={fieldErrors.priceCents ? true : undefined}
                   />
                   {fieldErrors.priceCents && (
-                    <FieldError>{fieldErrors.priceCents.join(' · ')}</FieldError>
+                    <FieldError>
+                      {fieldErrors.priceCents.join(' · ')}
+                    </FieldError>
                   )}
                 </Field>
 
@@ -514,7 +511,9 @@ export function ProductForm({
                 </Field>
 
                 <Field
-                  data-invalid={fieldErrors.discountPercentage ? true : undefined}
+                  data-invalid={
+                    fieldErrors.discountPercentage ? true : undefined
+                  }
                 >
                   <FieldLabel htmlFor='product-discount'>Sconto %</FieldLabel>
                   <InputAffix
@@ -535,7 +534,9 @@ export function ProductForm({
                   ) : (
                     <FieldDescription>
                       Lascia vuoto per nessuno sconto.{' '}
-                      <span className='font-semibold text-foreground/80'>1–90</span>{' '}
+                      <span className='font-semibold text-foreground/80'>
+                        1–90
+                      </span>{' '}
                       per mostrare un prezzo scontato.
                     </FieldDescription>
                   )}
@@ -576,7 +577,9 @@ export function ProductForm({
                 </Field>
 
                 <Field
-                  data-invalid={fieldErrors.shippingCostCents ? true : undefined}
+                  data-invalid={
+                    fieldErrors.shippingCostCents ? true : undefined
+                  }
                 >
                   <FieldLabel htmlFor='product-shipping-cost'>
                     Costo di spedizione <RequiredMark />
@@ -598,8 +601,8 @@ export function ProductForm({
                     </FieldError>
                   ) : (
                     <FieldDescription>
-                      Totale per questo lotto di acquisto. Concorre al cashflow e
-                      al calcolo del margine.
+                      Totale per questo lotto di acquisto. Concorre al cashflow
+                      e al calcolo del margine.
                     </FieldDescription>
                   )}
                 </Field>
@@ -725,9 +728,7 @@ function VariantsEditor({
   fieldErrors,
 }: VariantsEditorProps) {
   function update(index: number, patch: Partial<ProductVariantDraft>) {
-    onChange(
-      variants.map((v, i) => (i === index ? { ...v, ...patch } : v)),
-    );
+    onChange(variants.map((v, i) => (i === index ? { ...v, ...patch } : v)));
   }
 
   function addRow() {
@@ -751,8 +752,8 @@ function VariantsEditor({
     return (
       <div className='flex flex-col items-start gap-3 rounded-sm border border-dashed border-border bg-muted/50 p-4'>
         <p className='text-sm text-muted-foreground'>
-          Nessun colore. Aggiungi varianti per gestire scorte separate per
-          ogni tonalità.
+          Nessun colore. Aggiungi varianti per gestire scorte separate per ogni
+          tonalità.
         </p>
         <Button
           type='button'
@@ -859,9 +860,7 @@ function VariantsEditor({
                 aria-invalid={stockError ? true : undefined}
                 disabled={disabled}
               />
-              {stockError && (
-                <FieldError>{stockError.join(' · ')}</FieldError>
-              )}
+              {stockError && <FieldError>{stockError.join(' · ')}</FieldError>}
             </Field>
 
             <div className='flex items-end justify-end pb-1 sm:pb-0'>

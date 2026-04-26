@@ -11,6 +11,7 @@ import {
 } from 'react';
 import SiteHeader from './SiteHeader';
 import SiteFooter from './SiteFooter';
+import type { ProductCategory } from '@/lib/domain/product';
 
 const displayFont = 'font-[family-name:var(--font-fraunces)]';
 
@@ -289,7 +290,7 @@ function Collection() {
           meta={
             <>
               <span>014 / Autunno · Inverno &rsquo;26</span>
-              <SecondaryButton href='#'>Vedi tutto →</SecondaryButton>
+              <SecondaryButton href='/shop'>Vedi tutto →</SecondaryButton>
             </>
           }
         />
@@ -297,11 +298,12 @@ function Collection() {
         {/* Category grid — 3 featured */}
         <div className='grid grid-cols-1 gap-0.5 md:grid-cols-3'>
           <CollectionCard
+            category='scarpe'
             tag='Nuovo'
             tagRed
             title={
               <>
-                Capispalla
+                Sneakers
                 <br />
                 <em className='italic text-accent'>&amp; Cappotti</em>
               </>
@@ -310,10 +312,11 @@ function Collection() {
             <OuterwearPlaceholder />
           </CollectionCard>
           <CollectionCard
+            category='abbigliamento'
             tag='Più venduti'
             title={
               <>
-                Maglieria
+                Abbigliamento
                 <br />
                 <em className='italic text-accent'>&amp; Maglioni</em>
               </>
@@ -323,9 +326,10 @@ function Collection() {
           </CollectionCard>
           <CollectionCard
             tag='Riassortimento'
+            category='borse'
             title={
               <>
-                Denim
+                Borse
                 <br />
                 <em className='italic text-accent'>&amp; Pantaloni</em>
               </>
@@ -441,6 +445,7 @@ function SecondaryButton({
 }
 
 function CollectionCard({
+  category,
   tag,
   tagRed,
   title,
@@ -448,6 +453,8 @@ function CollectionCard({
   titleDark,
   children,
 }: {
+  /** Optional shop category to filter by when the card is clicked. */
+  category?: ProductCategory;
   tag: string;
   tagRed?: boolean;
   title: ReactNode;
@@ -463,7 +470,7 @@ function CollectionCard({
         : 'aspect-[3/4]';
   return (
     <Link
-      href='#'
+      href={category ? `/shop?category=${category}` : '/shop'}
       className={`group relative block overflow-hidden bg-secondary ${aspectClass} cursor-pointer`}
     >
       <div className='absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.04]'>
@@ -684,146 +691,17 @@ function ProductCard({
 }
 
 /* ============================================================
-   REVIEWS — Instagram DM cards + scroll dot indicator
+   REVIEWS — Real DM/IG screenshot carousel + scroll dot indicator
    ============================================================ */
-type Bubble =
-  | { kind: 'in' | 'out'; text: ReactNode; mono?: boolean; large?: boolean }
-  | { kind: 'img'; thumb: ReactNode; wide?: boolean }
-  | { kind: 'date'; text: string };
-
-type DM = {
-  id: string;
-  bubbles: Bubble[];
-};
-
-const dms: DM[] = [
-  {
-    id: 'dm1',
-    bubbles: [
-      {
-        kind: 'img',
-        thumb: <DMThumbBoots />,
-      },
-      {
-        kind: 'in',
-        text: 'Appena ricevuti gli stivali Campo — wow. Calzano come un guanto 🔥',
-      },
-      {
-        kind: 'in',
-        text: (
-          <>
-            Questo è il mio terzo ordine da voi{' '}
-            <span className='mx-1 text-accent'>❤</span>
-          </>
-        ),
-      },
-      {
-        kind: 'out',
-        text: 'Ma dai, bentornata nel branco 🦙 Usa HERDER10 sul prossimo ordine, offriamo noi.',
-      },
-      { kind: 'out', text: 'Buon divertimento!' },
-    ],
-  },
-  {
-    id: 'dm2',
-    bubbles: [
-      { kind: 'date', text: '8 FEB · 21:57' },
-      {
-        kind: 'in',
-        text: 'https://llamablaze.com/p/wildfire-coat',
-        mono: true,
-      },
-      { kind: 'date', text: '00:31' },
-      { kind: 'img', thumb: <DMThumbCoat />, wide: true },
-      {
-        kind: 'in',
-        text: 'È appena arrivato il cappotto Wildfire 😭 la qualità è pazzesca. Miglior acquisto dell\u2019anno, senza dubbio.',
-      },
-      {
-        kind: 'in',
-        text: (
-          <>
-            Grazie team! <span className='mx-1 text-accent'>❤</span>
-          </>
-        ),
-      },
-      {
-        kind: 'out',
-        text: 'Ahh ci hai illuminato la giornata. Ci vediamo al prossimo drop — ti abbiamo già salvata nella lista accesso anticipato 🙌',
-      },
-    ],
-  },
-  {
-    id: 'dm3',
-    bubbles: [
-      { kind: 'img', thumb: <DMThumbGift /> },
-      { kind: 'in', text: 'OH MIO DIOOOOO 😱😱😱', large: true },
-      {
-        kind: 'in',
-        text: (
-          <>
-            Sono felicissima!!!!!
-            <br />
-            Il cappotto è perfetto e la qualità è una delle migliori che abbia
-            mai avuto.
-            <br />
-            Grazie ragazziii <span className='mx-1 text-accent'>❤</span>
-          </>
-        ),
-      },
-      {
-        kind: 'out',
-        text: 'Leggenda! Ora sei ufficialmente una di noi. Taggaci in un fit, rilanciamo ✌️',
-      },
-      { kind: 'in', text: 'CI PENSO 🙌' },
-    ],
-  },
-  {
-    id: 'dm4',
-    bubbles: [
-      { kind: 'img', thumb: <DMThumbTag /> },
-      {
-        kind: 'in',
-        text: 'Non mi aspettavo una spedizione COSÌ veloce. Ottimo lavoro team, avete conquistato il mio portafoglio 😅',
-      },
-      {
-        kind: 'in',
-        text: (
-          <>
-            Presto arriva un altro ordine, adoro la maglieria{' '}
-            <span className='mx-1 text-accent'>❤</span>
-          </>
-        ),
-      },
-      {
-        kind: 'out',
-        text: 'Così ci piace sentirti. Il tuo codice fedeltà è appena arrivato nella casella — ci vediamo al prossimo 🦙',
-      },
-    ],
-  },
-  {
-    id: 'dm5',
-    bubbles: [
-      {
-        kind: 'in',
-        text: 'Okay la vestibilità del denim selvedge è *bacio dello chef*',
-      },
-      {
-        kind: 'in',
-        text: 'Finalmente jeans che non mi fanno sembrare un cosplay del 2014',
-      },
-      { kind: 'img', thumb: <DMThumbJeans /> },
-      {
-        kind: 'out',
-        text: 'Haha lo mettiamo su un cartellone 🦙 felici che ti stiano bene!',
-      },
-    ],
-  },
-];
+const reviewImages = Array.from(
+  { length: 11 },
+  (_, i) => `/review-${i + 1}.jpeg`,
+);
 
 function Reviews() {
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeDot, setActiveDot] = useState(0);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
   const dotCount = 3;
 
   useEffect(() => {
@@ -843,6 +721,20 @@ function Reviews() {
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    if (openIndex === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenIndex(null);
+    };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [openIndex]);
+
   return (
     <section className='bg-muted px-5 py-[clamp(60px,9vw,120px)] md:px-16'>
       <div className='mx-auto max-w-[1480px]'>
@@ -858,7 +750,7 @@ function Reviews() {
           meta={
             <>
               <span className='uppercase tracking-[0.15em]'>
-                Senza filtri · Direttamente da Instagram
+                Senza filtri · Direttamente dai DM
               </span>
               <SecondaryButton href='https://www.instagram.com/llama.blaze/'>
                 Segui @llamablaze →
@@ -872,8 +764,14 @@ function Reviews() {
             ref={trackRef}
             className='lb-dm-track flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-5 pb-2.5 md:px-16'
           >
-            {dms.map((dm) => (
-              <DMCard key={dm.id} dm={dm} />
+            {reviewImages.map((src, i) => (
+              <ReviewCard
+                key={src}
+                src={src}
+                index={i}
+                priority={i === 0}
+                onOpen={() => setOpenIndex(i)}
+              />
             ))}
           </div>
         </div>
@@ -891,71 +789,92 @@ function Reviews() {
           ))}
         </div>
       </div>
+
+      {openIndex !== null && (
+        <ReviewLightbox
+          src={reviewImages[openIndex]}
+          index={openIndex}
+          onClose={() => setOpenIndex(null)}
+        />
+      )}
     </section>
   );
 }
 
-function DMCard({ dm }: { dm: DM }) {
+function ReviewCard({
+  src,
+  index,
+  priority,
+  onOpen,
+}: {
+  src: string;
+  index: number;
+  priority?: boolean;
+  onOpen: () => void;
+}) {
   return (
-    <div className='relative flex aspect-9/16 w-80 flex-none flex-col gap-2.5 overflow-hidden rounded-[28px] bg-black p-[18px_14px] text-white shadow-[0_30px_60px_-30px_rgba(0,0,0,.4),0_0_0_1px_#000] snap-start'>
-      <div className='border-b border-[#222] pb-2 text-center text-[10px] tracking-[0.05em] text-[#8e8e93]'>
-        Nuovo Messaggio
-      </div>
-      {dm.bubbles.map((b, i) => {
-        if (b.kind === 'date') {
-          return (
-            <div
-              key={i}
-              className='my-1.5 text-center text-[11px] text-[#8e8e93]'
-            >
-              {b.text}
-            </div>
-          );
-        }
-        if (b.kind === 'img') {
-          return (
-            <div
-              key={i}
-              className={`overflow-hidden rounded-[14px] bg-transparent ${
-                b.wide ? 'max-w-[70%]' : 'max-w-[65%]'
-              } self-start`}
-            >
-              <div className='aspect-4/5 overflow-hidden rounded-[14px]'>
-                {b.thumb}
-              </div>
-            </div>
-          );
-        }
-        const isIn = b.kind === 'in';
-        return (
-          <div
-            key={i}
-            className={`max-w-[78%] rounded-[18px] px-3.5 py-2.5 leading-snug ${
-              b.large ? 'text-[15px]' : 'text-[13px]'
-            } ${b.mono ? 'font-mono text-[11px]' : ''} ${
-              isIn
-                ? 'self-start rounded-bl-[4px] bg-[#262628]'
-                : 'self-end rounded-br-[4px] text-white'
-            }`}
-            style={
-              !isIn
-                ? {
-                    background:
-                      'linear-gradient(135deg,#A951F4 0%, #6B3BFF 100%)',
-                  }
-                : undefined
-            }
-          >
-            {b.text}
-          </div>
-        );
-      })}
-      <div className='mt-auto flex items-center gap-2 rounded-full bg-[#1c1c1e] px-3.5 py-2 text-[12px] text-[#8e8e93]'>
-        <span className='grid h-[22px] w-[22px] place-items-center rounded-full bg-[#333] text-[11px]'>
-          🖼
-        </span>
-        Messaggio
-        <span className='ml-auto'>🎙</span>
+    <button
+      type='button'
+      onClick={onOpen}
+      aria-label={`Apri recensione ${index + 1} a schermo intero`}
+      className='relative aspect-9/16 w-80 flex-none cursor-zoom-in overflow-hidden rounded-[28px] bg-black text-left shadow-[0_30px_60px_-30px_rgba(0,0,0,.4),0_0_0_1px_#000] snap-start transition-transform duration-200 hover:scale-[1.01] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2'
+    >
+      <Image
+        src={src}
+        alt={`Recensione ${index + 1} dal branco`}
+        fill
+        sizes='320px'
+        priority={priority}
+        className='object-cover'
+      />
+    </button>
+  );
+}
+
+function ReviewLightbox({
+  src,
+  index,
+  onClose,
+}: {
+  src: string;
+  index: number;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      role='dialog'
+      aria-modal='true'
+      aria-label={`Recensione ${index + 1}`}
+      onClick={onClose}
+      className='fixed inset-0 z-100 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm'
+    >
+      <button
+        type='button'
+        onClick={onClose}
+        aria-label='Chiudi'
+        className='absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20'
+      >
+        <svg
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          className='h-5 w-5'
+        >
+          <path d='M6 6l12 12M6 18L18 6' />
+        </svg>
+      </button>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className='relative h-[min(90vh,900px)] w-[min(90vw,500px)]'
+      >
+        <Image
+          src={src}
+          alt={`Recensione ${index + 1} dal branco`}
+          fill
+          sizes='(max-width: 768px) 90vw, 500px'
+          className='object-contain'
+        />
       </div>
     </div>
   );
@@ -1508,134 +1427,3 @@ function LoaferPlaceholder() {
   );
 }
 
-/* ---- DM thumbnail placeholders ---- */
-function DMThumbBoots() {
-  return (
-    <div
-      className='h-full w-full'
-      style={{ background: 'linear-gradient(135deg,#ED1B34 0%,#7a0a14 100%)' }}
-    >
-      <svg
-        viewBox='0 0 200 250'
-        className='h-full w-full'
-        xmlns='http://www.w3.org/2000/svg'
-      >
-        <rect width='200' height='250' fill='#ED1B34' />
-        <path
-          d='M50 120 L70 120 L80 220 L40 220 Z M130 120 L150 120 L160 220 L120 220 Z'
-          fill='#0B0B0B'
-        />
-        <ellipse cx='60' cy='220' rx='22' ry='6' fill='#1a1a1a' />
-        <ellipse cx='140' cy='220' rx='22' ry='6' fill='#1a1a1a' />
-      </svg>
-    </div>
-  );
-}
-
-function DMThumbCoat() {
-  return (
-    <div
-      className='h-full w-full'
-      style={{ background: 'linear-gradient(135deg,#2a1a10,#0a0604)' }}
-    >
-      <svg
-        viewBox='0 0 200 250'
-        className='h-full w-full'
-        xmlns='http://www.w3.org/2000/svg'
-      >
-        <rect width='200' height='250' fill='#2a1a10' />
-        <path
-          d='M60 40 L100 30 L140 40 L160 100 L155 240 L45 240 L40 100 Z'
-          fill='#0B0B0B'
-        />
-        <path d='M100 30 L100 240' stroke='#1a1008' strokeWidth='2' />
-        <circle cx='95' cy='100' r='2' fill='#d4a574' />
-        <circle cx='95' cy='140' r='2' fill='#d4a574' />
-        <circle cx='95' cy='180' r='2' fill='#d4a574' />
-      </svg>
-    </div>
-  );
-}
-
-function DMThumbGift() {
-  return (
-    <div
-      className='h-full w-full'
-      style={{ background: 'linear-gradient(135deg,#f0e8d4,#c9b896)' }}
-    >
-      <svg
-        viewBox='0 0 200 250'
-        className='h-full w-full'
-        xmlns='http://www.w3.org/2000/svg'
-      >
-        <rect width='200' height='250' fill='#e8dfc8' />
-        <rect x='40' y='60' width='120' height='150' fill='#ED1B34' rx='4' />
-        <rect x='40' y='60' width='120' height='30' fill='#0B0B0B' />
-        <text
-          x='100'
-          y='82'
-          textAnchor='middle'
-          fill='#fff'
-          fontFamily='serif'
-          fontStyle='italic'
-          fontSize='16'
-        >
-          LlamaBlaze
-        </text>
-        <circle cx='100' cy='150' r='28' fill='#0B0B0B' opacity='.2' />
-      </svg>
-    </div>
-  );
-}
-
-function DMThumbTag() {
-  return (
-    <div
-      className='h-full w-full'
-      style={{ background: 'linear-gradient(135deg,#f8f4ec,#d4c8b0)' }}
-    >
-      <svg
-        viewBox='0 0 200 250'
-        className='h-full w-full'
-        xmlns='http://www.w3.org/2000/svg'
-      >
-        <rect width='200' height='250' fill='#f4efe0' />
-        <rect
-          x='40'
-          y='80'
-          width='120'
-          height='130'
-          fill='#ED1B34'
-          rx='6'
-          opacity='.85'
-        />
-        <path
-          d='M70 80 Q70 50 100 50 Q130 50 130 80'
-          stroke='#ED1B34'
-          strokeWidth='4'
-          fill='none'
-        />
-        <rect x='85' y='130' width='30' height='4' fill='#0B0B0B' />
-      </svg>
-    </div>
-  );
-}
-
-function DMThumbJeans() {
-  return (
-    <div
-      className='h-full w-full'
-      style={{ background: 'linear-gradient(135deg,#3a5a7a,#1a2a3a)' }}
-    >
-      <svg
-        viewBox='0 0 200 250'
-        className='h-full w-full'
-        xmlns='http://www.w3.org/2000/svg'
-      >
-        <rect width='200' height='250' fill='#3a5a7a' />
-        <rect x='70' y='40' width='60' height='170' fill='#2a4a6a' />
-        <path d='M90 40 L100 60 L110 40' fill='#c9a050' />
-      </svg>
-    </div>
-  );
-}

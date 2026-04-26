@@ -1,7 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
 import { toProductPurchase } from '@/lib/supabase/mappers';
-import type { ProductId, ProductPurchase, ProductPurchaseDraft } from '@/lib/domain';
+import type {
+  ProductId,
+  ProductPurchase,
+  ProductPurchaseDraft,
+} from '@/lib/domain';
 
 interface VariantPurchaseDraft {
   readonly variantId: string;
@@ -59,14 +63,17 @@ export async function recordProductPurchase(
   client: Client,
   draft: ProductPurchaseDraft,
 ): Promise<ProductPurchase> {
-  const { data: purchaseId, error } = await client.rpc('record_product_purchase', {
-    p_product_id: draft.productId,
-    p_quantity: draft.quantity,
-    p_unit_cost_cents: draft.unitCostCents,
-    p_shipping_cost_cents: draft.shippingCostCents,
-    p_purchased_at: draft.purchasedAt,
-    p_notes: draft.notes,
-  });
+  const { data: purchaseId, error } = await client.rpc(
+    'record_product_purchase',
+    {
+      p_product_id: draft.productId,
+      p_quantity: draft.quantity,
+      p_unit_cost_cents: draft.unitCostCents,
+      p_shipping_cost_cents: draft.shippingCostCents,
+      p_purchased_at: draft.purchasedAt,
+      p_notes: draft.notes,
+    },
+  );
 
   if (error) throw error;
   if (!purchaseId) throw new Error('record_product_purchase returned no id');
@@ -132,14 +139,17 @@ export async function recordVariantPurchase(
   client: Client,
   draft: VariantPurchaseDraft,
 ): Promise<ProductPurchase> {
-  const { data: purchaseId, error } = await client.rpc('record_variant_purchase', {
-    p_variant_id: draft.variantId,
-    p_quantity: draft.quantity,
-    p_unit_cost_cents: draft.unitCostCents,
-    p_shipping_cost_cents: draft.shippingCostCents,
-    p_purchased_at: draft.purchasedAt,
-    p_notes: draft.notes,
-  });
+  const { data: purchaseId, error } = await client.rpc(
+    'record_variant_purchase',
+    {
+      p_variant_id: draft.variantId,
+      p_quantity: draft.quantity,
+      p_unit_cost_cents: draft.unitCostCents,
+      p_shipping_cost_cents: draft.shippingCostCents,
+      p_purchased_at: draft.purchasedAt,
+      p_notes: draft.notes,
+    },
+  );
 
   if (error) throw error;
   if (!purchaseId) throw new Error('record_variant_purchase returned no id');

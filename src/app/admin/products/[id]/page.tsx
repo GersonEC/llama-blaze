@@ -31,7 +31,8 @@ function formatRelative(date: Date): string {
   const diffSec = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
   if (diffSec < 60) return 'pochi secondi fa';
   const diffMin = Math.round(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} ${diffMin === 1 ? 'minuto' : 'minuti'} fa`;
+  if (diffMin < 60)
+    return `${diffMin} ${diffMin === 1 ? 'minuto' : 'minuti'} fa`;
   const diffH = Math.round(diffMin / 60);
   if (diffH < 24) return `${diffH} ${diffH === 1 ? 'ora' : 'ore'} fa`;
   const diffD = Math.round(diffH / 24);

@@ -143,7 +143,9 @@ export async function updateProductAction(
   return upsertInternal(input, productId);
 }
 
-export async function deleteProductAction(productId: string): Promise<ProductActionResult> {
+export async function deleteProductAction(
+  productId: string,
+): Promise<ProductActionResult> {
   await requireAdmin();
   try {
     const supabase = await getSupabaseServerClient();
@@ -155,7 +157,8 @@ export async function deleteProductAction(productId: string): Promise<ProductAct
     if (/violates foreign key/i.test(message)) {
       return {
         ok: false,
-        error: 'Impossibile eliminare: il prodotto ha delle prenotazioni. Disattivalo invece.',
+        error:
+          'Impossibile eliminare: il prodotto ha delle prenotazioni. Disattivalo invece.',
       };
     }
     return { ok: false, error: message };
@@ -189,7 +192,10 @@ export async function uploadProductImageAction(
     const path = await uploadProductImage(supabase, file, parsed.data.slug);
     return { ok: true, path };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : 'Caricamento non riuscito' };
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Caricamento non riuscito',
+    };
   }
 }
 
@@ -202,7 +208,10 @@ export async function removeProductImageAction(
     await removeProductImage(supabase, path);
     return { ok: true };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : 'Rimozione non riuscita' };
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Rimozione non riuscita',
+    };
   }
 }
 

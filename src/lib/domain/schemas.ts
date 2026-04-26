@@ -9,7 +9,10 @@ const slugSchema = z
   .trim()
   .min(1, 'Slug is required')
   .max(80)
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase letters, numbers, and hyphens');
+  .regex(
+    /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+    'Use lowercase letters, numbers, and hyphens',
+  );
 
 const requiredCentsSchema = z
   .number()
@@ -160,7 +163,9 @@ export const ReservationStatusUpdateSchema = z.object({
   reservationId: z.string().uuid(),
   status: z.enum(RESERVATION_STATUSES),
 });
-export type ReservationStatusUpdateInput = z.infer<typeof ReservationStatusUpdateSchema>;
+export type ReservationStatusUpdateInput = z.infer<
+  typeof ReservationStatusUpdateSchema
+>;
 
 /** Admin login form. */
 export const AdminLoginSchema = z.object({
