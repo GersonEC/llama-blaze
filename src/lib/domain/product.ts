@@ -137,7 +137,10 @@ export interface Product {
    * reality.
    */
   readonly acquisitionCost: Money;
-  /** Latest per-unit shipping cost paid to bring stock in. Defaults to 0. */
+  /**
+   * Total shipping cost paid for the latest purchase batch. Flat amount —
+   * not multiplied by quantity. Defaults to 0.
+   */
   readonly shippingCost: Money;
   /**
    * Color variants attached to the product. Empty when the product has no
@@ -164,7 +167,10 @@ export interface ProductDraft {
   readonly discountPercentage: number | null;
   /** Latest per-unit acquisition cost in cents. Required (use 0 for none). */
   readonly acquisitionCostCents: number;
-  /** Latest per-unit shipping cost in cents. Required (use 0 for none). */
+  /**
+   * Total shipping cost in cents paid for the latest purchase batch (flat
+   * amount, not per-unit). Required (use 0 for none).
+   */
   readonly shippingCostCents: number;
   /**
    * Color variants to persist. When non-empty, the top-level `stock` field
@@ -185,11 +191,4 @@ export function finalPriceCents(
   if (!discountPercentage || discountPercentage <= 0) return fullPriceCents;
   const pct = Math.min(discountPercentage, 90);
   return Math.round((fullPriceCents * (100 - pct)) / 100);
-}
-
-/** Total per-unit cost (acquisition + shipping) in cents. */
-export function unitCostCents(
-  p: Pick<Product, 'acquisitionCost' | 'shippingCost'>,
-): number {
-  return p.acquisitionCost.amount + p.shippingCost.amount;
 }

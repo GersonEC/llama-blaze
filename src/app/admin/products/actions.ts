@@ -18,6 +18,7 @@ import type {
 import {
   createProduct,
   deleteProduct,
+  findProductById,
   removeProductImage,
   updateProduct,
   uploadProductImage,
@@ -26,6 +27,7 @@ import {
   recordInitialProductPurchase,
   recordProductPurchase,
   recordVariantPurchase,
+  syncInitialPurchaseQuantity,
 } from '@/lib/repositories/purchases';
 
 export interface ProductActionResult {
@@ -33,6 +35,25 @@ export interface ProductActionResult {
   readonly error?: string;
   readonly fieldErrors?: Record<string, string[]>;
   readonly productId?: string;
+}
+
+/**
+ * Extracts a human-readable message from an unknown thrown value. Supabase's
+ * `PostgrestError` is a plain object (not an `Error` instance) but still has
+ * a string `.message`, so a plain `instanceof Error` check would mis-classify
+ * it and surface the fallback to the UI — masking real database errors.
+ */
+function errorMessage(err: unknown, fallback = 'Errore sconosciuto'): string {
+  if (err instanceof Error) return err.message;
+  if (
+    typeof err === 'object' &&
+    err !== null &&
+    'message' in err &&
+    typeof (err as { message: unknown }).message === 'string'
+  ) {
+    return (err as { message: string }).message;
+  }
+  return fallback;
 }
 
 interface ProductFormPayload {
@@ -85,28 +106,61 @@ async function upsertInternal(
 
   try {
     const supabase = await getSupabaseServerClient();
-    const product = productId
-      ? await updateProduct(supabase, productId, parsed.data)
-      : await createProduct(supabase, parsed.data);
+    let product;
+    if (productId) {
+      // After creation, acquisition + shipping cost are immutable from the
+      // product form — corrections must go through the Reintegro card so the
+      // ledger stays the source of truth. We re-read the stored values from
+      // the existing product and override whatever the (locked) form sent
+      // before forwarding to the repository.
+      //
+      // Edge case: products created with stock=0 never produced an initial
+      // ledger row; the admin must use Reintegro to register their first
+      // batch — editing stock from the form will not back-fill that row.
+      const existing = await findProductById(supabase, productId);
+      if (!existing) {
+        return { ok: false, error: 'Prodotto non trovato.' };
+      }
+      const safeData = {
+        ...parsed.data,
+        acquisitionCostCents: existing.acquisitionCost.amount,
+        shippingCostCents: existing.shippingCost.amount,
+      };
+      product = await updateProduct(supabase, productId, safeData);
 
-    // On creation only, mirror the entered stock + costs into the cashflow
-    // ledger so the new product shows up as an Uscita. Best-effort: if this
-    // fails we still consider the product created — admin can always use the
-    // Reintegro flow to add the entry manually.
-    if (!productId && product.stock > 0) {
+      // Best-effort: when only the synthetic "Acquisto iniziale" ledger row
+      // exists, keep its quantity in sync with the new stock so Storico and
+      // Cashflow track reality. No-op once any reintegro has been recorded.
       try {
-        await recordInitialProductPurchase(supabase, {
-          productId: product.id,
-          quantity: product.stock,
-          unitCostCents: parsed.data.acquisitionCostCents,
-          shippingCostCents: parsed.data.shippingCostCents,
-          currency: product.price.currency,
-        });
+        await syncInitialPurchaseQuantity(supabase, productId, product.stock);
       } catch (err) {
         console.error(
-          '[createProductAction] initial purchase ledger insert failed',
+          '[updateProductAction] initial purchase quantity sync failed',
           err,
         );
+      }
+    } else {
+      product = await createProduct(supabase, parsed.data);
+
+      // On creation only, mirror the entered stock + costs into the cashflow
+      // ledger so the new product shows up as an Uscita. Best-effort: if this
+      // fails we still consider the product created — admin can always use
+      // the Reintegro flow to add the entry manually.
+      if (product.stock > 0) {
+        try {
+          await recordInitialProductPurchase(supabase, {
+            productId: product.id,
+            quantity: product.stock,
+            unitCostCents: parsed.data.acquisitionCostCents,
+            shippingCostCents: parsed.data.shippingCostCents,
+            currency: product.price.currency,
+          });
+        } catch (err) {
+          console.error(
+            '[createProductAction] initial purchase ledger insert failed',
+            err,
+          );
+        }
       }
     }
 
@@ -116,7 +170,7 @@ async function upsertInternal(
     revalidatePath(`/shop/${product.slug}`);
     return { ok: true, productId: product.id };
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Errore sconosciuto';
+    const message = errorMessage(err);
     if (/duplicate key/i.test(message) && /slug/i.test(message)) {
       return {
         ok: false,
@@ -153,12 +207,12 @@ export async function deleteProductAction(
     revalidatePath('/admin/products');
     revalidatePath('/shop');
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Errore sconosciuto';
+    const message = errorMessage(err);
     if (/violates foreign key/i.test(message)) {
       return {
         ok: false,
         error:
-          'Impossibile eliminare: il prodotto ha delle prenotazioni. Disattivalo invece.',
+          'Impossibile eliminare: ci sono ancora dati collegati a questo prodotto. Riprova oppure disattivalo.',
       };
     }
     return { ok: false, error: message };
@@ -192,10 +246,7 @@ export async function uploadProductImageAction(
     const path = await uploadProductImage(supabase, file, parsed.data.slug);
     return { ok: true, path };
   } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : 'Caricamento non riuscito',
-    };
+    return { ok: false, error: errorMessage(err, 'Caricamento non riuscito') };
   }
 }
 
@@ -208,10 +259,7 @@ export async function removeProductImageAction(
     await removeProductImage(supabase, path);
     return { ok: true };
   } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : 'Rimozione non riuscita',
-    };
+    return { ok: false, error: errorMessage(err, 'Rimozione non riuscita') };
   }
 }
 
@@ -237,8 +285,7 @@ export async function restockProductAction(
     revalidatePath('/shop');
     return { ok: true, productId: parsed.data.productId };
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Errore sconosciuto';
-    return { ok: false, error: message };
+    return { ok: false, error: errorMessage(err) };
   }
 }
 
@@ -276,7 +323,6 @@ export async function recordVariantPurchaseAction(
     revalidatePath('/shop');
     return { ok: true, productId: input.productId };
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Errore sconosciuto';
-    return { ok: false, error: message };
+    return { ok: false, error: errorMessage(err) };
   }
 }

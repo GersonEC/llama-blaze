@@ -18,6 +18,15 @@ interface VariantPurchaseDraft {
 
 type Client = SupabaseClient<Database>;
 
+/**
+ * Marker stored in `product_purchases.notes` for the synthetic ledger row
+ * created alongside a freshly-inserted product (see
+ * `recordInitialProductPurchase`). Used to identify the row when the admin
+ * later edits the product's stock so we can keep Storico/Cashflow in sync
+ * without touching post-creation reintegri.
+ */
+export const INITIAL_PURCHASE_NOTE = 'Acquisto iniziale';
+
 /** Ledger rows for a single product, newest first. */
 export async function listProductPurchases(
   client: Client,
@@ -56,8 +65,9 @@ export async function listPurchasesBetween(
 
 /**
  * Record a new purchase (restock) atomically via the `record_product_purchase`
- * RPC. The RPC bumps `products.stock` and updates the latest per-unit cost
- * columns in the same transaction, then returns the new purchase row id.
+ * RPC. The RPC bumps `products.stock`, refreshes
+ * `acquisition_cost_cents` (per-unit) and `shipping_cost_cents` (batch total)
+ * in the same transaction, then returns the new purchase row id.
  */
 export async function recordProductPurchase(
   client: Client,
@@ -94,11 +104,11 @@ export async function recordProductPurchase(
  * Unlike `recordProductPurchase`, this does NOT call the
  * `record_product_purchase` RPC and does NOT bump stock — the caller
  * (`createProduct`) has already inserted the product row with the
- * admin-entered stock. The ledger row stores `shippingCostCents` as the
- * **total** shipping cost for the batch (matches the new semantics applied
- * everywhere). To keep `products.shipping_cost_cents` consistent with the
- * RPC behaviour (per-unit reference for margin calc), we also overwrite the
- * product's `shipping_cost_cents` column with `floor(total / quantity)`.
+ * admin-entered stock. Both `product_purchases.shipping_cost_cents` and
+ * `products.shipping_cost_cents` store the **total** shipping cost for the
+ * batch (no per-unit derivation): `createProduct` already wrote the entered
+ * total into `products.shipping_cost_cents`, so this helper only needs to
+ * mirror that value into the ledger row.
  */
 export async function recordInitialProductPurchase(
   client: Client,
@@ -116,24 +126,63 @@ export async function recordInitialProductPurchase(
     unit_cost_cents: args.unitCostCents,
     shipping_cost_cents: args.shippingCostCents,
     currency: args.currency,
-    notes: 'Acquisto iniziale',
+    notes: INITIAL_PURCHASE_NOTE,
   });
   if (error) throw error;
+}
 
-  const perUnitShippingCents =
-    args.quantity > 0 ? Math.floor(args.shippingCostCents / args.quantity) : 0;
-  const { error: productError } = await client
-    .from('products')
-    .update({ shipping_cost_cents: perUnitShippingCents })
-    .eq('id', args.productId);
-  if (productError) throw productError;
+/**
+ * Keep the synthetic "Acquisto iniziale" ledger row aligned with the product's
+ * stock when the admin edits it from the product form. Costs and shipping are
+ * intentionally left alone — the form locks those fields after creation, so
+ * corrections must go through the Reintegro flow.
+ *
+ * Behaviour:
+ *  - no-op if the product has zero or more than one purchase rows (later
+ *    reintegri are off-limits to this sync),
+ *  - no-op if the lone row isn't the initial-purchase marker,
+ *  - if `newQuantity <= 0`, deletes the initial row so a stock=0 product
+ *    doesn't leave a positive-quantity ledger entry behind,
+ *  - otherwise updates the row's `quantity` to `newQuantity`.
+ */
+export async function syncInitialPurchaseQuantity(
+  client: Client,
+  productId: string,
+  newQuantity: number,
+): Promise<void> {
+  const { data: rows, error } = await client
+    .from('product_purchases')
+    .select('id, notes')
+    .eq('product_id', productId);
+
+  if (error) throw error;
+  if (!rows || rows.length !== 1) return;
+
+  const [row] = rows;
+  if (row.notes !== INITIAL_PURCHASE_NOTE) return;
+
+  if (newQuantity <= 0) {
+    const { error: deleteError } = await client
+      .from('product_purchases')
+      .delete()
+      .eq('id', row.id);
+    if (deleteError) throw deleteError;
+    return;
+  }
+
+  const { error: updateError } = await client
+    .from('product_purchases')
+    .update({ quantity: newQuantity })
+    .eq('id', row.id);
+  if (updateError) throw updateError;
 }
 
 /**
  * Variant-scoped counterpart to `recordProductPurchase`. Delegates to the
  * `record_variant_purchase` RPC which atomically appends the ledger row,
  * bumps the variant's stock (cascading into `products.stock` via trigger),
- * and refreshes the product's latest per-unit cost columns.
+ * and refreshes the product's `acquisition_cost_cents` (per-unit) and
+ * `shipping_cost_cents` (batch total) columns.
  */
 export async function recordVariantPurchase(
   client: Client,

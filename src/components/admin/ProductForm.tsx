@@ -115,6 +115,7 @@ export function ProductForm({
   sidebar,
 }: ProductFormProps) {
   const router = useRouter();
+  const isEdit = mode === 'edit';
   const [state, setState] = useState<ProductFormInitial>(initial ?? BLANK);
   const [priceMajor, setPriceMajor] = useState<string>(
     ((initial?.priceCents ?? 0) / 100).toFixed(2),
@@ -550,7 +551,7 @@ export function ProductForm({
                   }
                 >
                   <FieldLabel htmlFor='product-acquisition-cost'>
-                    Costo di acquisto <RequiredMark />
+                    Costo di acquisto {!isEdit && <RequiredMark />}
                   </FieldLabel>
                   <InputAffix
                     id='product-acquisition-cost'
@@ -558,7 +559,9 @@ export function ProductForm({
                     value={acquisitionMajor}
                     onChange={(e) => setAcquisitionMajor(e.target.value)}
                     inputMode='decimal'
-                    required
+                    required={!isEdit}
+                    disabled={isEdit}
+                    aria-readonly={isEdit ? true : undefined}
                     aria-invalid={
                       fieldErrors.acquisitionCostCents ? true : undefined
                     }
@@ -569,9 +572,9 @@ export function ProductForm({
                     </FieldError>
                   ) : (
                     <FieldDescription>
-                      Per unità. Sarà registrato come acquisto iniziale nel
-                      cashflow alla creazione, e aggiornato dai reintegri
-                      successivi.
+                      {isEdit
+                        ? 'Modifica tramite la card Reintegro per registrare un nuovo acquisto.'
+                        : 'Per unità. Sarà registrato come acquisto iniziale nel cashflow alla creazione, e aggiornato dai reintegri successivi.'}
                     </FieldDescription>
                   )}
                 </Field>
@@ -582,7 +585,7 @@ export function ProductForm({
                   }
                 >
                   <FieldLabel htmlFor='product-shipping-cost'>
-                    Costo di spedizione <RequiredMark />
+                    Costo di spedizione {!isEdit && <RequiredMark />}
                   </FieldLabel>
                   <InputAffix
                     id='product-shipping-cost'
@@ -590,7 +593,9 @@ export function ProductForm({
                     value={shippingMajor}
                     onChange={(e) => setShippingMajor(e.target.value)}
                     inputMode='decimal'
-                    required
+                    required={!isEdit}
+                    disabled={isEdit}
+                    aria-readonly={isEdit ? true : undefined}
                     aria-invalid={
                       fieldErrors.shippingCostCents ? true : undefined
                     }
@@ -601,8 +606,9 @@ export function ProductForm({
                     </FieldError>
                   ) : (
                     <FieldDescription>
-                      Totale per questo lotto di acquisto. Concorre al cashflow
-                      e al calcolo del margine.
+                      {isEdit
+                        ? 'Modifica tramite la card Reintegro per registrare un nuovo acquisto.'
+                        : 'Totale per questo lotto di acquisto. Concorre al cashflow e al calcolo del margine.'}
                     </FieldDescription>
                   )}
                 </Field>
