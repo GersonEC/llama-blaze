@@ -297,64 +297,21 @@ function Collection() {
 
         {/* Category grid — 3 featured */}
         <div className='grid grid-cols-1 gap-0.5 md:grid-cols-3'>
-          <CollectionCard
-            category='scarpe'
-            tag='Nuovo'
-            tagRed
-            title={
-              <>
-                Sneakers
-                <br />
-                <em className='italic text-accent'>&amp; Cappotti</em>
-              </>
-            }
-          >
-            <OuterwearPlaceholder />
+          <CollectionCard category='scarpe' title={<>Sneakers</>}>
+            <SneakersPlaceholder />
           </CollectionCard>
-          <CollectionCard
-            category='abbigliamento'
-            tag='Più venduti'
-            title={
-              <>
-                Abbigliamento
-                <br />
-                <em className='italic text-accent'>&amp; Maglioni</em>
-              </>
-            }
-          >
-            <KnitwearPlaceholder />
+          <CollectionCard category='borse' title={<>Borse</>}>
+            <BorsePlaceholder />
           </CollectionCard>
-          <CollectionCard
-            tag='Riassortimento'
-            category='borse'
-            title={
-              <>
-                Borse
-                <br />
-                <em className='italic text-accent'>&amp; Pantaloni</em>
-              </>
-            }
-          >
-            <DenimPlaceholder />
+          <CollectionCard category='abbigliamento' title={<>Abbigliamento</>}>
+            <AbbigliamentoPlaceholder />
           </CollectionCard>
         </div>
 
         {/* Editorial split */}
         <div className='mt-0.5 grid grid-cols-1 gap-0.5 md:grid-cols-[1.35fr_1fr]'>
-          <CollectionCard
-            tag='Lookbook'
-            aspect='big'
-            title={
-              <>
-                La Storia <em className='italic text-accent'>Wildfire</em>
-                <br />
-                <span className='font-sans text-sm font-semibold uppercase tracking-[0.15em] text-white/80'>
-                  Capitolo I — Sale &amp; Fumo
-                </span>
-              </>
-            }
-          >
-            <LookbookPlaceholder />
+          <CollectionCard category='tech' aspect='big' title={<>Tech</>}>
+            <TechPlaceholder />
           </CollectionCard>
           <div className='grid grid-rows-2 gap-0.5'>
             <CollectionCard
@@ -455,7 +412,7 @@ function CollectionCard({
 }: {
   /** Optional shop category to filter by when the card is clicked. */
   category?: ProductCategory;
-  tag: string;
+  tag?: string;
   tagRed?: boolean;
   title: ReactNode;
   aspect?: 'default' | 'big' | 'small';
@@ -476,42 +433,57 @@ function CollectionCard({
       <div className='absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.04]'>
         {children}
       </div>
+
+      {/* Backdrop over the image — softens the photo and ensures text legibility */}
       <div
-        className={`absolute inset-0 flex flex-col justify-between p-7 ${
+        aria-hidden
+        className={`absolute inset-0 transition-colors duration-500 ${
+          titleDark
+            ? 'bg-white/20 group-hover:bg-white/35'
+            : 'bg-black/70 group-hover:bg-black/80'
+        }`}
+      />
+      {/* Subtle vignette for extra depth */}
+      <div
+        aria-hidden
+        className='absolute inset-0 opacity-70 transition-opacity duration-500 group-hover:opacity-90'
+        style={{
+          background:
+            'radial-gradient(120% 80% at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 100%)',
+        }}
+      />
+
+      <div
+        className={`absolute inset-0 flex flex-col items-center justify-center p-7 text-center ${
           titleDark ? 'text-foreground' : 'text-white'
         }`}
-        style={{
-          background: titleDark
-            ? 'linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.15) 100%)'
-            : 'linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%)',
-        }}
       >
-        <span
-          className={`self-start px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] ${
-            tagRed ? 'bg-accent text-white' : 'bg-white/95 text-foreground'
-          }`}
-        >
-          {tag}
-        </span>
-        <div className='flex items-end justify-between gap-5'>
-          <h3
-            className={`${displayFont} text-[36px] font-normal leading-none tracking-[-0.01em]`}
+        {tag && (
+          <span
+            className={`mb-5 inline-block px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] ${
+              tagRed ? 'bg-accent text-white' : 'bg-white/95 text-foreground'
+            }`}
           >
-            {title}
-          </h3>
-          <span className='grid h-12 w-12 place-items-center rounded-full bg-white text-foreground transition-all duration-300 group-hover:-rotate-45 group-hover:bg-accent group-hover:text-white'>
-            <svg
-              width='18'
-              height='18'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='2'
-            >
-              <path d='M5 12h14M13 5l7 7-7 7' />
-            </svg>
+            {tag}
           </span>
-        </div>
+        )}
+        <h3
+          className={`${displayFont} max-w-[18ch] text-[clamp(32px,3.4vw,44px)] font-normal leading-[1.05] tracking-[-0.01em] text-balance drop-shadow-[0_2px_18px_rgba(0,0,0,0.35)]`}
+        >
+          {title}
+        </h3>
+        <span className='mt-7 grid h-12 w-12 place-items-center rounded-full bg-white text-foreground shadow-lg transition-all duration-300 group-hover:-rotate-45 group-hover:bg-accent group-hover:text-white'>
+          <svg
+            width='18'
+            height='18'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+          >
+            <path d='M5 12h14M13 5l7 7-7 7' />
+          </svg>
+        </span>
       </div>
     </Link>
   );
@@ -1147,143 +1119,51 @@ function ChatFloat() {
 /* ============================================================
    SVG PLACEHOLDERS — stand-ins for product/editorial photos
    ============================================================ */
-function OuterwearPlaceholder() {
+function SneakersPlaceholder() {
   return (
-    <svg
-      className='h-full w-full'
-      viewBox='0 0 400 533'
-      preserveAspectRatio='xMidYMid slice'
-      xmlns='http://www.w3.org/2000/svg'
-    >
-      <defs>
-        <linearGradient id='g1' x1='0' y1='0' x2='0' y2='1'>
-          <stop offset='0' stopColor='#5a4a3a' />
-          <stop offset='1' stopColor='#2a1f15' />
-        </linearGradient>
-        <pattern id='weave1' width='6' height='6' patternUnits='userSpaceOnUse'>
-          <rect width='6' height='6' fill='#3d3025' />
-          <path d='M0 3 L6 3 M3 0 L3 6' stroke='#4a3a2a' strokeWidth='.5' />
-        </pattern>
-      </defs>
-      <rect width='400' height='533' fill='url(#g1)' />
-      <rect width='400' height='533' fill='url(#weave1)' opacity='.6' />
-      <path
-        d='M120 80 L200 60 L280 80 L310 180 L300 420 L280 533 L120 533 L100 420 L90 180 Z'
-        fill='#1a1208'
-        opacity='.85'
-      />
-      <path d='M200 60 L200 520' stroke='#0a0604' strokeWidth='3' />
-      <circle cx='190' cy='200' r='3' fill='#d4a574' />
-      <circle cx='190' cy='260' r='3' fill='#d4a574' />
-      <circle cx='190' cy='320' r='3' fill='#d4a574' />
-      <rect
-        x='150'
-        y='120'
-        width='100'
-        height='40'
-        fill='#f4e9d6'
-        opacity='.3'
-      />
-    </svg>
+    <Image
+      src='/sneakers-placeholder.png'
+      alt=''
+      width={400}
+      height={533}
+      className='h-full w-full object-contain'
+    />
   );
 }
 
-function KnitwearPlaceholder() {
+function BorsePlaceholder() {
   return (
-    <svg
-      className='h-full w-full'
-      viewBox='0 0 400 533'
-      preserveAspectRatio='xMidYMid slice'
-      xmlns='http://www.w3.org/2000/svg'
-    >
-      <defs>
-        <linearGradient id='g2' x1='0' y1='0' x2='1' y2='1'>
-          <stop offset='0' stopColor='#7a4a2a' />
-          <stop offset='1' stopColor='#3a1f10' />
-        </linearGradient>
-        <pattern
-          id='cable'
-          width='20'
-          height='30'
-          patternUnits='userSpaceOnUse'
-        >
-          <path
-            d='M0 0 Q10 15 0 30 M20 0 Q10 15 20 30'
-            stroke='#5a3020'
-            strokeWidth='2'
-            fill='none'
-          />
-          <circle cx='10' cy='15' r='2' fill='#8a5030' />
-        </pattern>
-      </defs>
-      <rect width='400' height='533' fill='url(#g2)' />
-      <rect width='400' height='533' fill='url(#cable)' opacity='.7' />
-      <circle cx='200' cy='130' r='50' fill='#e8c4a0' opacity='.95' />
-      <path
-        d='M200 170 Q160 200 140 280 L140 533 L260 533 L260 280 Q240 200 200 170'
-        fill='#4a2815'
-      />
-    </svg>
+    <Image
+      src='/borse-placeholder.jpeg'
+      alt=''
+      width={400}
+      height={533}
+      className='h-full w-full object-contain'
+    />
   );
 }
 
-function DenimPlaceholder() {
+function AbbigliamentoPlaceholder() {
   return (
-    <svg
-      className='h-full w-full'
-      viewBox='0 0 400 533'
-      preserveAspectRatio='xMidYMid slice'
-      xmlns='http://www.w3.org/2000/svg'
-    >
-      <defs>
-        <linearGradient id='g3' x1='0' y1='0' x2='0' y2='1'>
-          <stop offset='0' stopColor='#e8d9c0' />
-          <stop offset='.5' stopColor='#c9b8a0' />
-          <stop offset='1' stopColor='#8a7860' />
-        </linearGradient>
-        <pattern id='denim' width='4' height='4' patternUnits='userSpaceOnUse'>
-          <rect width='4' height='4' fill='#5a7a9a' />
-          <path d='M0 2 L4 2' stroke='#4a6a8a' strokeWidth='.5' />
-        </pattern>
-      </defs>
-      <rect width='400' height='533' fill='url(#g3)' />
-      <rect x='100' y='250' width='200' height='283' fill='url(#denim)' />
-      <path
-        d='M100 250 L200 240 L300 250 L295 320 L200 310 L105 320 Z'
-        fill='#6a8aaa'
-      />
-      <rect x='180' y='270' width='40' height='25' rx='3' fill='#4a6a8a' />
-      <circle cx='200' cy='283' r='4' fill='#c9a050' stroke='#8a6a30' />
-      <rect x='90' y='240' width='220' height='22' fill='#5a3a20' />
-    </svg>
+    <Image
+      src='/abbigliamento-placeholder.webp'
+      alt=''
+      width={400}
+      height={533}
+      className='h-full w-full object-contain'
+    />
   );
 }
 
-function LookbookPlaceholder() {
+function TechPlaceholder() {
   return (
-    <svg
-      className='h-full w-full'
-      viewBox='0 0 800 500'
-      preserveAspectRatio='xMidYMid slice'
-      xmlns='http://www.w3.org/2000/svg'
-    >
-      <defs>
-        <linearGradient id='sky' x1='0' y1='0' x2='0' y2='1'>
-          <stop offset='0' stopColor='#d98a4a' />
-          <stop offset='.5' stopColor='#c9623a' />
-          <stop offset='1' stopColor='#6a2810' />
-        </linearGradient>
-      </defs>
-      <rect width='800' height='300' fill='url(#sky)' />
-      <rect y='300' width='800' height='200' fill='#3a2010' />
-      <ellipse cx='650' cy='160' rx='80' ry='80' fill='#f4d490' opacity='.5' />
-      <ellipse cx='380' cy='220' rx='18' ry='22' fill='#2a150a' />
-      <rect x='350' y='240' width='60' height='140' fill='#1a0a05' />
-      <rect x='360' y='380' width='40' height='100' fill='#3a2515' />
-      <rect x='340' y='330' width='80' height='8' fill='#ED1B34' />
-      <rect x='345' y='338' width='6' height='80' fill='#ED1B34' />
-      <rect x='409' y='338' width='6' height='80' fill='#ED1B34' />
-    </svg>
+    <Image
+      src='/tech-placeholder.webp'
+      alt=''
+      width={400}
+      height={533}
+      className='h-full w-full object-contain'
+    />
   );
 }
 
