@@ -47,6 +47,14 @@ export default async function AdminLayout({
               <Link href='/admin/products'>Prodotti</Link>
             </Button>
             <Button asChild variant='ghost' size='sm'>
+              <Link
+                href='http://42.194.176.201:8082/en/trackIndex.htm'
+                target='_blank'
+              >
+                Tracking
+              </Link>
+            </Button>
+            <Button asChild variant='ghost' size='sm'>
               <Link href='/'>Vai al negozio</Link>
             </Button>
             <Separator orientation='vertical' className='mx-1 h-10' />
