@@ -346,8 +346,6 @@ function Collection() {
           </div>
         </div>
 
-        {/* Product rail */}
-        <ProductRail />
       </div>
     </section>
   );
@@ -541,52 +539,6 @@ const products: Product[] = [
     render: () => <LoaferPlaceholder />,
   },
 ];
-
-function ProductRail() {
-  const [favs, setFavs] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(
-      products.filter((p) => p.defaultFav).map((p) => [p.id, true]),
-    ),
-  );
-  const toggleFav = (id: string) =>
-    setFavs((prev) => ({ ...prev, [id]: !prev[id] }));
-
-  return (
-    <div className='mt-20'>
-      <div className='mb-6 flex flex-wrap items-end justify-between gap-6 border-b border-border pb-5'>
-        <div>
-          <div className='mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-accent'>
-            ● Più desiderati della settimana
-          </div>
-          <h3
-            className={`${displayFont} text-[clamp(28px,3.6vw,48px)] font-normal leading-[0.95] tracking-[-0.02em]`}
-          >
-            Tendenze
-          </h3>
-        </div>
-        <div className='flex gap-2'>
-          <button className='rounded-sm border border-border bg-secondary px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.22em] transition-colors hover:bg-background'>
-            ‹
-          </button>
-          <button className='rounded-sm border border-border bg-secondary px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.22em] transition-colors hover:bg-background'>
-            ›
-          </button>
-        </div>
-      </div>
-
-      <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-        {products.map((p) => (
-          <ProductCard
-            key={p.id}
-            product={p}
-            fav={!!favs[p.id]}
-            onToggleFav={() => toggleFav(p.id)}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function ProductCard({
   product,
