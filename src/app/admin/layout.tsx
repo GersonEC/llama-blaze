@@ -11,6 +11,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// The admin area is auth-gated and per-request (reads cookies via
+// `getAdminUser`), so it must never be statically prerendered at build time.
+// Setting this on the layout covers every admin route, including the auth
+// pages (login, forgot-password, set-password).
+export const dynamic = 'force-dynamic';
+
 export default async function AdminLayout({
   children,
 }: {
