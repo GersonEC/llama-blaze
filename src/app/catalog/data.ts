@@ -51,7 +51,7 @@ export const CATALOG_ITEMS: readonly CatalogItem[] = [
   {
     number: '02',
     name: 'Speedy Bandoulière 25',
-    price: '€ 180',
+    price: '€ 220',
     realPrice: '€ 1.600',
     description: 'La borsa Speedy Bandoulière 25, realizzata in tela Monogram, è un raffinato accessorio ideale per tutti i giorni. L\'esclusivo modello rivisita in chiave contemporanea un classico della Maison, originariamente creato per i viaggiatori degli anni Trenta. Le linee inconfondibili, i manici in pelle, il lucchetto con incisione e la tracolla amovibile sono dettagli d\'intramontabile eleganza. 25 x 19 x 15 cm (Lunghezza x Altezza x Larghezza )',
     images: ['/catalog/speedy-25-1.jpg', '/catalog/speedy-25-2.jpg', '/catalog/speedy-25-3.jpg', '/catalog/speedy-25-4.jpg'],

@@ -71,11 +71,11 @@ export function CatalogGallery({ items, caption }: CatalogGalleryProps) {
                   </h2>
                 </div>
                 <span className='flex shrink-0 items-baseline gap-2'>
-                  {item.realPrice ? (
+                  {/* {item.realPrice ? (
                     <s className='text-[14px] tabular-nums text-zinc-600 font-medium decoration-1'>
                       {item.realPrice}
                     </s>
-                  ) : null}
+                  ) : null} */}
                   <span className='text-[14px] tabular-nums text-red-500 font-semibold'>
                     {item.price}
                   </span>
